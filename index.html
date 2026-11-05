@@ -1,0 +1,1140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f5f66">
+<title>KK Daily Tasks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* ===================== CONFIG — fill these two after creating Supabase ===================== */
+window.KK_CONFIG = {
+  SUPABASE_URL: "",            // e.g. https://abcdxyz.supabase.co
+  SUPABASE_ANON_KEY: "",       // Project Settings → API → anon public key
+  MANAGER_EMAIL_DOMAIN: "staff.kkumbrellas.com", // synthetic login emails for managers (no mail is sent)
+  BACKFILL_DAYS: 7             // how many past days a manager can still fill in
+};
+</script>
+<style>
+:root{
+  --bg:#eef2f5; --surface:#ffffff; --surface-2:#f6f8fa; --line:#d6dee6;
+  --ink:#172033; --ink-2:#4a5568; --ink-3:#7a8698;
+  --teal:#0f5f66; --teal-2:#147a83; --teal-soft:#dcefef;
+  --amber:#b86e00; --amber-soft:#fdf0d9;
+  --red:#b42318; --red-soft:#fde4e1;
+  --panel-off:#cfd8e1;
+  --radius-s:8px; --radius:14px;
+  --shadow:0 1px 2px rgba(23,32,51,.06),0 4px 14px rgba(23,32,51,.06);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1621; --surface:#16212e; --surface-2:#1b2836; --line:#2a3a4b;
+    --ink:#e8eef4; --ink-2:#b4c0cd; --ink-3:#8796a7;
+    --teal:#3fb3b8; --teal-2:#56c6cb; --teal-soft:#123a3e;
+    --amber:#f0a73a; --amber-soft:#3a2a10; --red:#ff8a7a; --red-soft:#3d1a17;
+    --panel-off:#2c3d4f; --shadow:none; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1621; --surface:#16212e; --surface-2:#1b2836; --line:#2a3a4b;
+  --ink:#e8eef4; --ink-2:#b4c0cd; --ink-3:#8796a7;
+  --teal:#3fb3b8; --teal-2:#56c6cb; --teal-soft:#123a3e;
+  --amber:#f0a73a; --amber-soft:#3a2a10; --red:#ff8a7a; --red-soft:#3d1a17;
+  --panel-off:#2c3d4f; --shadow:none; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font-family:"Hind Siliguri",system-ui,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--teal-2);outline-offset:2px}
+h1,h2,h3{margin:0;line-height:1.2}
+h1{font-size:1.5rem;font-weight:700}
+h2{font-size:1.2rem;font-weight:600}
+h3{font-size:1rem;font-weight:600}
+p{margin:0}
+.muted{color:var(--ink-2)} .faint{color:var(--ink-3)} .small{font-size:.875rem}
+.wrap{max-width:620px;margin:0 auto;padding:0 16px}
+.wrap-wide{max-width:1180px;margin:0 auto;padding:0 16px}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+.stack>*+*{margin-top:12px}
+.hidden{display:none!important}
+
+/* top bar */
+.bar{background:var(--teal);color:#fff;padding:14px 0 12px}
+:root[data-theme="dark"] .bar{background:#0b3b40}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bar{background:#0b3b40}}
+.bar .who{font-weight:600;font-size:1.05rem}
+.bar .sub{opacity:.85;font-size:.875rem}
+.bar button{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:999px;padding:6px 14px;font-size:.875rem}
+.bar button:hover{background:rgba(255,255,255,.24)}
+
+/* buttons & fields */
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-s);padding:10px 16px;font-weight:600}
+.btn:hover{border-color:var(--ink-3)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.primary:hover{background:var(--teal-2)}
+:root[data-theme="dark"] .btn.primary{color:#062226}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.primary{color:#062226}}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--teal)}
+.btn.danger{color:var(--red)}
+.btn.block{width:100%;padding:14px;font-size:1.05rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+label.f{display:block;font-size:.875rem;font-weight:500;color:var(--ink-2);margin-bottom:4px}
+.in{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-s);padding:10px 12px;font-size:1rem}
+.in:focus{border-color:var(--teal);outline:none;box-shadow:0 0 0 3px var(--teal-soft)}
+textarea.in{min-height:72px;resize:vertical}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;border-radius:999px;padding:6px 14px;font-weight:500;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:1px 10px;font-size:.8rem;font-weight:500;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line);white-space:nowrap}
+.chip.amber{background:var(--amber-soft);color:var(--amber);border-color:transparent}
+.chip.red{background:var(--red-soft);color:var(--red);border-color:transparent}
+.chip.teal{background:var(--teal-soft);color:var(--teal);border-color:transparent}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.pad{padding:16px}
+
+/* login */
+.login{min-height:100vh;display:grid;place-items:center;padding:24px 16px}
+.login .card{width:100%;max-width:400px;padding:28px 24px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.brand svg{flex:none}
+.err{color:var(--red);font-size:.9rem;min-height:1.2em}
+.demo-note{background:var(--amber-soft);color:var(--amber);border-radius:var(--radius-s);padding:8px 12px;font-size:.875rem;margin-bottom:16px}
+
+/* canopy hero (manager) */
+.hero{background:var(--teal);color:#fff;padding:4px 0 22px}
+:root[data-theme="dark"] .hero{background:#0b3b40}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .hero{background:#0b3b40}}
+.hero-inner{display:flex;align-items:center;gap:18px}
+.canopy{flex:none;width:150px;height:auto}
+.canopy .p-off{fill:rgba(255,255,255,.18)}
+.canopy .p-on{fill:#ffffff}
+.canopy .p{transition:fill .35s ease}
+.canopy .rib{stroke:var(--teal);stroke-width:1.2}
+:root[data-theme="dark"] .canopy .rib{stroke:#0b3b40}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .canopy .rib{stroke:#0b3b40}}
+.canopy .shaft{stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round}
+.bignum{font-size:3rem;font-weight:700;line-height:1}
+.bignum small{font-size:1.25rem;font-weight:500;opacity:.8}
+.hero .left-line{font-size:1.05rem;margin-top:4px}
+.hero .left-line b{font-weight:700}
+.datepick{display:flex;align-items:center;gap:6px;margin-top:10px}
+.datepick button{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:999px;width:34px;height:34px;font-size:1.1rem;line-height:1}
+.datepick button:disabled{opacity:.35}
+.datepick span{font-weight:600;min-width:130px;text-align:center}
+@media (prefers-reduced-motion:reduce){.canopy .p{transition:none}}
+
+/* tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:12px 14px;font-weight:600;color:var(--ink-3);border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--teal);border-color:var(--teal)}
+.tabs .count{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:999px;background:var(--amber-soft);color:var(--amber);font-size:.75rem}
+
+/* task rows */
+.group-title{display:flex;align-items:baseline;justify-content:space-between;margin:18px 2px 8px}
+.group-title h3{font-size:.95rem;color:var(--ink-2)}
+.tasklist{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.task{display:flex;gap:12px;align-items:flex-start;padding:14px;border-top:1px solid var(--line);width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0}
+.task:first-child{border-top:0}
+.task:hover{background:var(--surface-2)}
+.tick{flex:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--ink-3);display:grid;place-items:center;margin-top:1px;background:var(--surface)}
+.task.done .tick{background:var(--teal);border-color:var(--teal)}
+.tick svg{opacity:0}
+.task.done .tick svg{opacity:1}
+.task .t-title{font-weight:600;font-size:1.02rem}
+.task.done .t-title{color:var(--ink-2)}
+.task .t-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;align-items:center}
+.task .t-desc{color:var(--ink-2);font-size:.9rem;margin-top:2px}
+.task .t-body{flex:1;min-width:0}
+.empty{padding:28px 16px;text-align:center;color:var(--ink-2)}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(10,16,26,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+@media (min-width:700px){.scrim{align-items:center}}
+.sheet{background:var(--surface);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:20px 18px calc(18px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}
+@media (min-width:700px){.sheet{border-radius:18px}}
+.sheet.wide{max-width:720px}
+.sheet h2{margin-bottom:4px}
+.sheet .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.sheet .actions .btn{flex:1}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:500;z-index:60;box-shadow:var(--shadow)}
+
+/* banner */
+.banner{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--amber-soft);color:var(--amber);border-radius:var(--radius);padding:12px 14px;margin-top:14px;font-weight:500}
+.banner button{background:none;border:1px solid currentColor;color:inherit;border-radius:999px;padding:4px 12px;font-weight:600;white-space:nowrap}
+
+/* photos */
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.ph{position:relative;border-radius:var(--radius-s);overflow:hidden;background:var(--surface-2);aspect-ratio:4/3;border:1px solid var(--line)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .cap{position:absolute;left:0;right:0;bottom:0;padding:4px 8px;font-size:.75rem;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+.ph .x{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:1rem;line-height:1}
+.camera-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:2px dashed var(--teal);color:var(--teal);background:var(--teal-soft);border-radius:var(--radius);padding:26px 16px;font-weight:600;width:100%;font-size:1.05rem}
+
+/* admin */
+.anav{display:flex;gap:4px;margin-top:10px;overflow-x:auto}
+.anav button{background:transparent;border:0;color:rgba(255,255,255,.8);padding:8px 14px;border-radius:999px;font-weight:600;white-space:nowrap}
+.anav button[aria-selected="true"]{background:rgba(255,255,255,.18);color:#fff}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:18px 0 14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.kpi{padding:14px 16px}
+.kpi .v{font-size:1.9rem;font-weight:700;line-height:1.1}
+.kpi .l{color:var(--ink-2);font-size:.9rem}
+.table-wrap{overflow-x:auto}
+table.t{width:100%;border-collapse:collapse;font-size:.95rem}
+table.t th{text-align:left;font-weight:600;color:var(--ink-2);font-size:.85rem;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface-2)}
+table.t td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.t tr:last-child td{border-bottom:0}
+table.t tr.click{cursor:pointer}
+table.t tr.click:hover td{background:var(--surface-2)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.meter{display:flex;align-items:center;gap:8px;min-width:150px}
+.meter .track{flex:1;height:8px;border-radius:999px;background:var(--panel-off);overflow:hidden}
+.meter .fill{height:100%;background:var(--teal);border-radius:999px}
+.meter .fill.mid{background:var(--amber)}
+.meter .fill.low{background:var(--red)}
+.meter span{font-variant-numeric:tabular-nums;font-size:.875rem;min-width:52px;text-align:right}
+.bars{display:flex;align-items:flex-end;gap:3px;height:120px;padding-top:8px}
+.bars .b{flex:1;background:var(--teal);border-radius:3px 3px 0 0;min-height:2px;position:relative}
+.bars .b.none{background:var(--panel-off)}
+.bars-x{display:flex;gap:3px;font-size:.7rem;color:var(--ink-3);margin-top:4px}
+.bars-x span{flex:1;text-align:center}
+.grid2{display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:900px){.grid2{grid-template-columns:1fr 1fr}}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 12px;max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:var(--radius-s);padding:8px 10px}
+.checks label{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:.92rem}
+.days{display:flex;flex-wrap:wrap;gap:6px}
+.days button{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-s);min-width:42px;padding:6px 8px;font-weight:500}
+.days button[aria-pressed="true"]{background:var(--teal);color:#fff;border-color:var(--teal)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid .full{grid-column:1/-1}
+@media (max-width:560px){.form-grid{grid-template-columns:1fr}}
+.photo-day{margin-bottom:18px}
+.missing-list{display:flex;flex-wrap:wrap;gap:6px}
+.lightbox img{width:100%;border-radius:var(--radius-s)}
+.spinner{width:22px;height:22px;border:3px solid var(--panel-off);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app"><div class="spinner" aria-label="Loading"></div></div>
+<div id="layer"></div>
+
+<script>
+"use strict";
+/* =========================================================================
+   Utilities
+   ========================================================================= */
+const CFG = window.KK_CONFIG;
+const DEMO = !CFG.SUPABASE_URL || new URLSearchParams(location.search).has("demo");
+const TZ = "Asia/Kolkata";
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const istToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date());
+const toD = (s) => new Date(s + "T00:00:00Z");
+const fromD = (d) => d.toISOString().slice(0, 10);
+const addDays = (s, n) => { const d = toD(s); d.setUTCDate(d.getUTCDate() + n); return fromD(d); };
+const diffDays = (a, b) => Math.round((toD(a) - toD(b)) / 86400000);
+const dow = (s) => toD(s).getUTCDay();
+const fmtDate = (s, opts = { weekday: "short", day: "numeric", month: "short" }) => toD(s).toLocaleDateString("en-IN", { ...opts, timeZone: "UTC" });
+const fmtTime = (iso) => iso ? new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: TZ }) : "";
+const istDateOf = (iso) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date(iso));
+const istHHMM = (iso) => new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: TZ }).format(new Date(iso));
+const isoAtIST = (date, hhmm) => new Date(`${date}T${hhmm}:00+05:30`).toISOString();
+const fmtHHMM = (t) => { if (!t) return ""; const [h, m] = t.split(":").map(Number); const ap = h >= 12 ? "pm" : "am"; return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${ap}`; };
+const pct = (a, b) => (b ? Math.round((a / b) * 100) : null);
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
+const slugEmail = (name) => name.toLowerCase().trim().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "") + "@" + CFG.MANAGER_EMAIL_DOMAIN;
+const titleCase = (s) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+
+function toast(msg) {
+  const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
+}
+
+/* =========================================================================
+   Scheduling — which tasks fall on which day
+   ========================================================================= */
+const ONE_OFF = (t) => t.task_type === "adhoc" || t.task_type === "project";
+const weekStart = (s) => addDays(s, -dow(s));
+const monthsBetween = (a, b) => { const A = toD(a), B = toD(b); return (B.getUTCFullYear() - A.getUTCFullYear()) * 12 + (B.getUTCMonth() - A.getUTCMonth()); };
+
+function isRecurringDue(t, d) {
+  if (ONE_OFF(t) || !t.active) return false;
+  if (d < t.start_date) return false;
+  if (t.end_date && d > t.end_date) return false;
+  if (t.task_type === "daily") return true;
+  const every = t.repeat_every || 1, days = t.repeat_days || [];
+  if (t.repeat_unit === "weekly") {
+    if (!days.includes(dow(d))) return false;
+    return (diffDays(weekStart(d), weekStart(t.start_date)) / 7) % every === 0;
+  }
+  if (t.repeat_unit === "monthly") {
+    const D = toD(d), day = D.getUTCDate();
+    const last = new Date(Date.UTC(D.getUTCFullYear(), D.getUTCMonth() + 1, 0)).getUTCDate();
+    if (!days.some((x) => Math.min(x, last) === day)) return false;
+    return monthsBetween(t.start_date, d) % every === 0;
+  }
+  return false;
+}
+
+/* For one manager on one date: what was due, what was done.
+   comps: Map key `${task_id}|${date}` → completion; oneOffDone: Map task_id → completion */
+function dayPlan(tasks, compIndex, oneOffDone, d) {
+  const items = [];
+  for (const t of tasks) {
+    if (ONE_OFF(t)) {
+      if (!t.active && !oneOffDone.has(t.id)) continue;
+      const c = oneOffDone.get(t.id);
+      const doneOn = c ? c.for_date : null;
+      if (doneOn === d) items.push({ t, c, kind: "oneoff" });
+      else if (!c && t.start_date <= d && t.due_date <= d) items.push({ t, c: null, kind: "oneoff", overdue: t.due_date < d });
+      else if (c && doneOn > d && t.due_date <= d) items.push({ t, c: null, kind: "oneoff", overdue: t.due_date < d });
+    } else if (isRecurringDue(t, d)) {
+      items.push({ t, c: compIndex.get(`${t.id}|${d}`) || null, kind: "rec" });
+    }
+  }
+  return items;
+}
+function indexComps(comps, tasks) {
+  const byKey = new Map(), oneOff = new Map();
+  const oneOffIds = new Set(tasks.filter(ONE_OFF).map((t) => t.id));
+  for (const c of comps) {
+    byKey.set(`${c.task_id}|${c.for_date}`, c);
+    if (oneOffIds.has(c.task_id)) { const p = oneOff.get(c.task_id); if (!p || c.for_date < p.for_date) oneOff.set(c.task_id, c); }
+  }
+  return { byKey, oneOff };
+}
+const isLate = (c) => c && istDateOf(c.created_at) > c.for_date;
+
+/* =========================================================================
+   Backend: Supabase (live) or in-memory (demo)
+   ========================================================================= */
+function supabaseApi() {
+  const sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+  const ok = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
+  async function all(q) { // page past Supabase's 1000-row cap
+    const out = []; for (let from = 0; ; from += 1000) { const rows = ok(await q().range(from, from + 999)); out.push(...rows); if (rows.length < 1000) return out; }
+  }
+  return {
+    async listManagers() { return ok(await sb.rpc("list_managers")); },
+    async signIn(email, password) {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw new Error(/invalid/i.test(error.message) ? "Wrong PIN or password. Try again." : error.message);
+      return this.me();
+    },
+    async me() {
+      const { data } = await sb.auth.getSession(); if (!data.session) return null;
+      const p = ok(await sb.from("profiles").select("*").eq("id", data.session.user.id).maybeSingle());
+      if (!p || !p.active) { await sb.auth.signOut(); return null; }
+      return p;
+    },
+    async signOut() { await sb.auth.signOut(); },
+    async profiles() { return ok(await sb.from("profiles").select("*").order("full_name")); },
+    async tasks(managerId) { return all(() => { let q = sb.from("tasks").select("*").order("sort_order").order("created_at"); if (managerId) q = q.eq("manager_id", managerId); return q; }); },
+    async completions({ managerId, from, to, taskIds }) {
+      return all(() => {
+        let q = sb.from("task_completions").select("*").order("for_date");
+        if (managerId) q = q.eq("manager_id", managerId);
+        if (taskIds) q = q.in("task_id", taskIds); else q = q.gte("for_date", from).lte("for_date", to);
+        return q;
+      });
+    },
+    async oneOffCompletions(ids) { if (!ids.length) return []; return this.completions({ taskIds: ids }); },
+    async saveCompletion(c) { return ok(await sb.from("task_completions").upsert(c, { onConflict: "task_id,for_date" }).select().single()); },
+    async deleteCompletion(id) { ok(await sb.from("task_completions").delete().eq("id", id)); },
+    async saveTasks(rows) { return ok(await sb.from("tasks").upsert(rows).select()); },
+    async deleteTask(id) { ok(await sb.from("tasks").delete().eq("id", id)); },
+    async photos({ managerId, from, to }) {
+      let q = sb.from("unit_photos").select("*").gte("for_date", from).lte("for_date", to).order("created_at");
+      if (managerId) q = q.eq("manager_id", managerId);
+      const rows = ok(await q); if (!rows.length) return rows;
+      const signed = ok(await sb.storage.from("unit-photos").createSignedUrls(rows.map((r) => r.storage_path), 3600));
+      const m = new Map(signed.map((s) => [s.path, s.signedUrl]));
+      return rows.map((r) => ({ ...r, url: m.get(r.storage_path) }));
+    },
+    async uploadPhoto(managerId, date, blob, caption) {
+      const path = `${managerId}/${date}/${uid()}.jpg`;
+      ok(await sb.storage.from("unit-photos").upload(path, blob, { contentType: "image/jpeg" }));
+      return ok(await sb.from("unit_photos").insert({ manager_id: managerId, for_date: date, storage_path: path, caption }).select().single());
+    },
+    async deletePhoto(p) { await sb.storage.from("unit-photos").remove([p.storage_path]); ok(await sb.from("unit_photos").delete().eq("id", p.id)); },
+    async updateProfile(id, patch) { ok(await sb.from("profiles").update(patch).eq("id", id)); },
+    async manageManager(body) {
+      const { data, error } = await sb.functions.invoke("manage-manager", { body });
+      if (error) { let m = error.message; try { m = (await error.context.json()).error || m; } catch (_) {} throw new Error(m); }
+      return data;
+    },
+  };
+}
+
+function demoApi() {
+  const NAMES = ["ANANDMOY BANERJEE","ANUP ROY","AVINASH SHAW","BACHU BAKULI","BOLAI SANTRA","HIMANSHU KUMAR","ISHAN CHATERJEE","JOYDIP BAL","JOYESH GHOSH","LAKSHMIKANTA KARMAKAR","MAINAK GANGULY","MOLOY DHARA","RAJU SANTRA","SOUMITRO DE","SUBRATA CHAKRABORTY","SUROJIT CHAKRABORTY","TRIDIB MANDAL","UMA CHINA"];
+  const DEPTS = ["Cutting","Cover Stitching","Ribs Plant","Printing","Framing","Takai","Packing","Plating","Eyeleting","Tube Fitting","Topstitch","QC Cover","Strap Production","Bartack","Tips Fixing","Sleeves","FG Store","Maintenance"];
+  const today = istToday();
+  let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  const db = { profiles: [], tasks: [], comps: [], photos: [] };
+  db.profiles.push({ id: "admin", full_name: "KK Admin", email: "kkumbrellas@gmail.com", role: "admin", active: true, department: null });
+  NAMES.forEach((n, i) => db.profiles.push({ id: "m" + i, full_name: n, email: slugEmail(n), role: "manager", active: true, department: DEPTS[i] }));
+  const daily = ["Check worker attendance at 9:30","Issue material against today's lots","Update production in MIS sheet","Check machines and report breakdowns","Count finished pieces and hand to next dept","Lock store and switch off power at close"];
+  const start = addDays(today, -40);
+  db.profiles.filter((p) => p.role === "manager").forEach((p, i) => {
+    daily.forEach((title, k) => db.tasks.push({ id: `${p.id}-d${k}`, manager_id: p.id, title, description: null, task_type: "daily", priority: k === 2 ? "high" : "normal", target_time: ["09:30", "11:00", "18:30", null, "17:30", "19:00"][k], start_date: start, active: true, sort_order: k, repeat_every: 1 }));
+    db.tasks.push({ id: `${p.id}-w`, manager_id: p.id, title: "Deep clean machines and oil moving parts", task_type: "recurring", repeat_unit: "weekly", repeat_days: [6], repeat_every: 1, priority: "normal", start_date: start, active: true, sort_order: 10 });
+    db.tasks.push({ id: `${p.id}-mo`, manager_id: p.id, title: "Monthly stock audit of department", task_type: "recurring", repeat_unit: "monthly", repeat_days: [31], repeat_every: 1, priority: "normal", start_date: start, active: true, sort_order: 11 });
+    if (i % 3 === 0) db.tasks.push({ id: `${p.id}-a`, manager_id: p.id, title: "Send rejected-piece report for lot 4471", task_type: "adhoc", priority: "high", start_date: addDays(today, -3), due_date: addDays(today, -1), active: true, sort_order: 20 });
+    if (i === 1) db.tasks.push({ id: `${p.id}-p1`, manager_id: p.id, title: "Shortlist 3 vendors for new website", task_type: "project", project_name: "New KK website", priority: "normal", start_date: addDays(today, -5), due_date: addDays(today, 4), active: true, sort_order: 30 });
+  });
+  const skill = db.profiles.map(() => 0.55 + rnd() * 0.43);
+  for (let back = 14; back >= 0; back--) {
+    const d = addDays(today, -back);
+    db.profiles.forEach((p, pi) => {
+      if (p.role !== "manager") return;
+      const tasks = db.tasks.filter((t) => t.manager_id === p.id && !ONE_OFF(t) && isRecurringDue(t, d));
+      tasks.forEach((t, k) => {
+        if (back === 0 && k >= 2 + (pi % 3)) return;
+        if (rnd() > skill[pi + 1]) return;
+        const hh = 9 + k * 1.6 + rnd(); const hhmm = `${String(Math.floor(hh)).padStart(2, "0")}:${String(Math.floor((hh % 1) * 60)).padStart(2, "0")}`;
+        const late = rnd() < 0.15;
+        db.comps.push({ id: uid(), task_id: t.id, manager_id: p.id, for_date: d, completed_at: isoAtIST(d, hhmm), entry_mode: late || rnd() < 0.3 ? "manual" : "tick", created_at: isoAtIST(late && back > 0 ? addDays(d, 1) : d, late ? "10:00" : hhmm), note: null });
+      });
+      if (back > 0 && rnd() < skill[pi + 1]) db.photos.push({ id: uid(), manager_id: p.id, for_date: d, storage_path: "demo", caption: "End of day", created_at: isoAtIST(d, "18:45"), url: demoPhoto(pi + back) });
+    });
+  }
+  function demoPhoto(n) {
+    const hue = (n * 37) % 360;
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><rect width='400' height='300' fill='hsl(${hue},18%,82%)'/><rect y='200' width='400' height='100' fill='hsl(${hue},12%,62%)'/>${[0, 1, 2].map((i) => `<rect x='${40 + i * 120}' y='120' width='90' height='80' rx='4' fill='hsl(${hue},25%,${45 + i * 8}%)'/>`).join("")}<text x='200' y='60' font-family='sans-serif' font-size='20' text-anchor='middle' fill='hsl(${hue},20%,30%)'>Demo photo</text></svg>`;
+    return "data:image/svg+xml," + encodeURIComponent(svg);
+  }
+  let me = null;
+  const wait = (v) => new Promise((r) => setTimeout(() => r(v), 120));
+  const clone = (x) => JSON.parse(JSON.stringify(x));
+  return {
+    demo: true,
+    async listManagers() { return wait(db.profiles.filter((p) => p.role === "manager" && p.active).map((p) => ({ id: p.id, full_name: p.full_name, login_email: p.email, department: p.department }))); },
+    async signIn(email, pw) { if (!pw) throw new Error("Enter your PIN."); me = db.profiles.find((p) => p.email === email.toLowerCase()) || null; if (!me) throw new Error("No account for that email. In the demo, use kkumbrellas@gmail.com."); return wait(clone(me)); },
+    async me() { return me ? clone(me) : null; },
+    async signOut() { me = null; },
+    async profiles() { return wait(clone(db.profiles)); },
+    async tasks(managerId) { return wait(clone(db.tasks.filter((t) => !managerId || t.manager_id === managerId))); },
+    async completions({ managerId, from, to, taskIds }) { return wait(clone(db.comps.filter((c) => (!managerId || c.manager_id === managerId) && (taskIds ? taskIds.includes(c.task_id) : c.for_date >= from && c.for_date <= to)))); },
+    async oneOffCompletions(ids) { return this.completions({ taskIds: ids }); },
+    async saveCompletion(c) { const i = db.comps.findIndex((x) => x.task_id === c.task_id && x.for_date === c.for_date); const row = { id: uid(), created_at: new Date().toISOString(), ...(i >= 0 ? db.comps[i] : {}), ...c }; if (i >= 0) db.comps[i] = row; else db.comps.push(row); return wait(clone(row)); },
+    async deleteCompletion(id) { db.comps = db.comps.filter((c) => c.id !== id); return wait(); },
+    async saveTasks(rows) { const out = rows.map((r) => { const row = { id: uid(), active: true, repeat_every: 1, sort_order: 0, created_at: new Date().toISOString(), ...r }; const i = db.tasks.findIndex((t) => t.id === row.id); if (i >= 0) db.tasks[i] = { ...db.tasks[i], ...row }; else db.tasks.push(row); return row; }); return wait(clone(out)); },
+    async deleteTask(id) { db.tasks = db.tasks.filter((t) => t.id !== id); db.comps = db.comps.filter((c) => c.task_id !== id); return wait(); },
+    async photos({ managerId, from, to }) { return wait(clone(db.photos.filter((p) => (!managerId || p.manager_id === managerId) && p.for_date >= from && p.for_date <= to))); },
+    async uploadPhoto(managerId, date, blob, caption) { const url = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); }); const row = { id: uid(), manager_id: managerId, for_date: date, storage_path: "demo", caption, created_at: new Date().toISOString(), url }; db.photos.push(row); return wait(row); },
+    async deletePhoto(p) { db.photos = db.photos.filter((x) => x.id !== p.id); return wait(); },
+    async updateProfile(id, patch) { Object.assign(db.profiles.find((p) => p.id === id), patch); return wait(); },
+    async manageManager(body) {
+      if (body.action === "create") { const p = { id: uid(), full_name: body.full_name.toUpperCase(), email: slugEmail(body.full_name), role: "manager", active: true, department: body.department || null }; db.profiles.push(p); return wait({ ok: true, pin: body.pin }); }
+      return wait({ ok: true, pin: body.pin });
+    },
+  };
+}
+
+const api = DEMO ? demoApi() : supabaseApi();
+
+/* =========================================================================
+   App state + shell
+   ========================================================================= */
+const S = {
+  me: null,
+  // manager
+  mDate: istToday(), mTab: "tasks", mTasks: [], mComps: [], mOneOff: [], mPhotos: [],
+  // admin
+  aTab: "overview", aDate: istToday(), aRange: 7, profiles: [], tasks: [], comps: [], oneOff: [], aPhotos: [],
+  aTaskFilter: { manager: "all", type: "all", q: "" }, aDetail: null, aPhotoDate: istToday(),
+};
+const app = $("#app"), layer = $("#layer");
+
+function brandMark(size = 40) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 48 48" aria-hidden="true"><path d="M4 26 Q24 0 44 26 Q40 22 34.7 26 Q29.3 22 24 26 Q18.7 22 13.3 26 Q8 22 4 26Z" fill="var(--teal)"/><path d="M24 26 V40 Q24 44 20 44 Q17 44 17 41" fill="none" stroke="var(--teal)" stroke-width="3" stroke-linecap="round"/></svg>`;
+}
+
+/* Canopy: one panel per task; filled panels = done. Above 16 tasks, panels show proportionally. */
+function canopySVG(done, total) {
+  const N = Math.max(1, Math.min(total || 8, 16));
+  const filled = total ? (total <= 16 ? done : Math.round((done / total) * 16)) : 0;
+  const W = 200, cx = 100, top = 10, base = 92, half = 92, sc = 9;
+  const xs = Array.from({ length: N + 1 }, (_, i) => cx - half + (2 * half * i) / N);
+  const ribPath = (x) => `Q ${x.toFixed(1)} ${top + 8} ${x.toFixed(1)} ${base}`;
+  const ribRev = (x) => `Q ${x.toFixed(1)} ${top + 8} ${cx} ${top}`;
+  let panels = "", ribs = "";
+  for (let i = 0; i < N; i++) {
+    const a = xs[i], b = xs[i + 1], mid = (a + b) / 2;
+    panels += `<path class="p ${i < filled ? "p-on" : "p-off"}" d="M ${cx} ${top} ${ribPath(a)} Q ${mid.toFixed(1)} ${base - sc} ${b.toFixed(1)} ${base} ${ribRev(b)} Z"/>`;
+    if (i > 0) ribs += `<path class="rib" fill="none" d="M ${cx} ${top} ${ribPath(a)}"/>`;
+  }
+  return `<svg class="canopy" viewBox="0 0 ${W} 150" role="img" aria-label="${done} of ${total} tasks done">${panels}${ribs}<path class="shaft" d="M ${cx} ${top - 6} V ${top}"/><path class="shaft" d="M ${cx} ${base - 4} V 132 Q ${cx} 144 ${cx - 11} 144 Q ${cx - 20} 144 ${cx - 20} 135"/></svg>`;
+}
+
+function openSheet(html, wide = false) {
+  layer.innerHTML = `<div class="scrim" data-close><div class="sheet ${wide ? "wide" : ""}" role="dialog" aria-modal="true">${html}</div></div>`;
+  const f = layer.querySelector("[autofocus]") || layer.querySelector("input,button,select,textarea"); f && f.focus();
+}
+function closeSheet() { layer.innerHTML = ""; }
+/* In-app yes/no step (pop-up dialogs are blocked in some app views) */
+function ask(question, yesLabel, danger = true) {
+  return new Promise((resolve) => {
+    openSheet(`<h2>${esc(question)}</h2><div class="actions"><button class="btn" type="button" id="askNo">Cancel</button><button class="btn ${danger ? "danger" : "primary"}" type="button" id="askYes">${esc(yesLabel)}</button></div>`);
+    $("#askNo").onclick = () => { closeSheet(); resolve(false); };
+    $("#askYes").onclick = () => { closeSheet(); resolve(true); };
+  });
+}
+layer.addEventListener("click", (e) => { if (e.target.hasAttribute("data-close") || e.target.closest("[data-dismiss]")) closeSheet(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && layer.innerHTML) closeSheet(); });
+
+/* =========================================================================
+   Login
+   ========================================================================= */
+let loginMode = "manager", managersCache = [];
+async function renderLogin(err = "") {
+  if (!managersCache.length) { try { managersCache = await api.listManagers(); } catch (e) { err = err || "Could not reach the server. Check the internet connection."; } }
+  const last = (() => { try { return localStorage.getItem("kk_last_manager") || ""; } catch (_) { return ""; } })();
+  app.innerHTML = `
+  <main class="login">
+    <div class="card">
+      <div class="brand">${brandMark(44)}<div><h1>KK Daily Tasks</h1><p class="muted small">Kendo Sales · managers' daily checklist</p></div></div>
+      ${DEMO ? `<p class="demo-note">Demo mode with sample data. Any PIN or password works.</p>` : ""}
+      <div class="seg" role="group" aria-label="Sign in as" style="margin-bottom:18px">
+        <button type="button" data-mode="manager" aria-pressed="${loginMode === "manager"}">Manager</button>
+        <button type="button" data-mode="admin" aria-pressed="${loginMode === "admin"}">Admin</button>
+      </div>
+      <form id="loginForm" class="stack" autocomplete="on">
+        ${loginMode === "manager" ? `
+          <div><label class="f" for="mgr">Your name</label>
+            <select id="mgr" class="in" required><option value="">Choose your name</option>
+              ${managersCache.map((m) => `<option value="${esc(m.login_email)}" ${m.login_email === last ? "selected" : ""}>${esc(titleCase(m.full_name))}</option>`).join("")}
+            </select></div>
+          <div><label class="f" for="pin">6-digit PIN</label>
+            <input id="pin" class="in" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="current-password" required style="letter-spacing:.4em;font-size:1.3rem"></div>
+        ` : `
+          <div><label class="f" for="em">Admin email</label>
+            <input id="em" class="in" type="email" value="kkumbrellas@gmail.com" autocomplete="username" required></div>
+          <div><label class="f" for="pw">Password</label>
+            <input id="pw" class="in" type="password" autocomplete="current-password" required></div>
+        `}
+        <p class="err" role="alert">${esc(err)}</p>
+        <button class="btn primary block" type="submit">Sign in</button>
+      </form>
+    </div>
+  </main>`;
+  app.querySelectorAll("[data-mode]").forEach((b) => b.onclick = () => { loginMode = b.dataset.mode; renderLogin(); });
+  $("#loginForm").onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Signing in…";
+    try {
+      let email, pw;
+      if (loginMode === "manager") { email = $("#mgr").value; pw = $("#pin").value; try { localStorage.setItem("kk_last_manager", email); } catch (_) {} }
+      else { email = $("#em").value.trim(); pw = $("#pw").value; }
+      const me = await api.signIn(email, pw);
+      if (!me) throw new Error("This account is switched off. Ask the admin.");
+      S.me = me; boot();
+    } catch (er) { renderLogin(er.message); }
+  };
+}
+
+async function signOut() { await api.signOut(); S.me = null; managersCache = []; renderLogin(); }
+
+/* =========================================================================
+   MANAGER
+   ========================================================================= */
+async function loadManager() {
+  const today = istToday(), from = addDays(today, -CFG.BACKFILL_DAYS);
+  S.mTasks = await api.tasks(S.me.id);
+  const oneIds = S.mTasks.filter(ONE_OFF).map((t) => t.id);
+  const [comps, one, photos] = await Promise.all([
+    api.completions({ managerId: S.me.id, from, to: today }),
+    api.oneOffCompletions(oneIds),
+    api.photos({ managerId: S.me.id, from: today, to: today }),
+  ]);
+  S.mComps = comps; S.mOneOff = one; S.mPhotos = photos;
+}
+function mIndex() { return indexComps([...S.mComps, ...S.mOneOff.filter((c) => !S.mComps.some((x) => x.id === c.id))], S.mTasks); }
+
+function missingPastDays() {
+  const today = istToday(), { byKey, oneOff } = mIndex(), out = [];
+  for (let i = 1; i <= CFG.BACKFILL_DAYS; i++) {
+    const d = addDays(today, -i);
+    const n = dayPlan(S.mTasks, byKey, oneOff, d).filter((x) => x.kind === "rec" && !x.c).length;
+    if (n) out.push({ d, n });
+  }
+  return out;
+}
+
+function renderManager() {
+  const today = istToday(), d = S.mDate, isToday = d === today;
+  const { byKey, oneOff } = mIndex();
+  const items = dayPlan(S.mTasks, byKey, oneOff, d);
+  const done = items.filter((x) => x.c).length, total = items.length, left = total - done;
+  const upcoming = isToday ? S.mTasks.filter((t) => ONE_OFF(t) && t.active && !oneOff.has(t.id) && t.due_date > d && t.start_date <= d) : [];
+  const missing = missingPastDays();
+  const missingTotal = missing.reduce((a, b) => a + b.n, 0);
+  const minDate = addDays(today, -CFG.BACKFILL_DAYS);
+  const hour = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hour12: false, timeZone: TZ }).format(new Date()));
+
+  const groups = [
+    { key: "overdue", title: "Carried over", list: items.filter((x) => x.overdue && !x.c) },
+    { key: "todo", title: isToday ? "To do today" : "Not done", list: items.filter((x) => !x.c && !x.overdue) },
+    { key: "done", title: "Done", list: items.filter((x) => x.c) },
+  ];
+
+  app.innerHTML = `
+  <header class="bar"><div class="wrap row between">
+    <div><div class="who">${esc(titleCase(S.me.full_name))}</div><div class="sub">${esc(S.me.department || "Manager")}</div></div>
+    <button type="button" id="out">Sign out</button>
+  </div></header>
+  <section class="hero"><div class="wrap hero-inner">
+    ${canopySVG(done, total)}
+    <div>
+      <div class="bignum">${done}<small> / ${total}</small></div>
+      <p class="left-line">${total === 0 ? "No tasks for this day" : left === 0 ? "All tasks done" : `<b>${left}</b> ${left === 1 ? "task" : "tasks"} left ${isToday ? "today" : "on this day"}`}</p>
+      <div class="datepick">
+        <button type="button" data-day="-1" aria-label="Previous day" ${d <= minDate ? "disabled" : ""}>‹</button>
+        <span>${isToday ? "Today, " + fmtDate(d, { day: "numeric", month: "short" }) : fmtDate(d)}</span>
+        <button type="button" data-day="1" aria-label="Next day" ${isToday ? "disabled" : ""}>›</button>
+      </div>
+    </div>
+  </div></section>
+  <main class="wrap" style="padding-bottom:40px">
+    ${missingTotal && isToday ? `<div class="banner"><span>${missingTotal} ${missingTotal === 1 ? "entry" : "entries"} from earlier days not filled in</span><button type="button" data-goto="${missing[missing.length - 1].d}">Fill in</button></div>` : ""}
+    ${!isToday ? `<div class="banner" style="background:var(--surface-2);color:var(--ink-2)"><span>Filling in ${fmtDate(d)}. Enter the time each task was done.</span><button type="button" data-goto="${today}">Back to today</button></div>` : ""}
+    <div class="tabs" role="tablist" style="margin-top:14px">
+      <button role="tab" type="button" data-tab="tasks" aria-selected="${S.mTab === "tasks"}">Tasks${left ? `<span class="count">${left}</span>` : ""}</button>
+      ${isToday ? `<button role="tab" type="button" data-tab="photos" aria-selected="${S.mTab === "photos"}">Unit photos${S.mPhotos.length ? ` (${S.mPhotos.length})` : (hour >= 16 ? `<span class="count">!</span>` : "")}</button>` : ""}
+    </div>
+    ${S.mTab === "photos" && isToday ? managerPhotosHTML() : `
+      ${total === 0 ? `<div class="tasklist"><p class="empty">No tasks set for ${isToday ? "today" : "this day"}. The admin assigns tasks from the admin login.</p></div>` : ""}
+      ${groups.filter((g) => g.list.length).map((g) => `
+        <div class="group-title"><h3>${g.title}</h3><span class="faint small">${g.list.length}</span></div>
+        <div class="tasklist">${g.list.map(taskRowHTML).join("")}</div>`).join("")}
+      ${upcoming.length ? `<div class="group-title"><h3>Coming up</h3><span class="faint small">${upcoming.length}</span></div>
+        <div class="tasklist">${upcoming.map((t) => taskRowHTML({ t, c: null, upcoming: true })).join("")}</div>` : ""}
+    `}
+  </main>`;
+
+  $("#out").onclick = signOut;
+  app.querySelectorAll("[data-day]").forEach((b) => b.onclick = () => { S.mDate = addDays(S.mDate, +b.dataset.day); S.mTab = "tasks"; renderManager(); });
+  app.querySelectorAll("[data-goto]").forEach((b) => b.onclick = () => { S.mDate = b.dataset.goto; S.mTab = "tasks"; renderManager(); });
+  app.querySelectorAll("[data-tab]").forEach((b) => b.onclick = () => { S.mTab = b.dataset.tab; renderManager(); });
+  app.querySelectorAll("[data-task]").forEach((b) => b.onclick = () => taskSheet(b.dataset.task));
+  if (S.mTab === "photos") bindManagerPhotos();
+}
+
+function typeChip(t) {
+  if (t.task_type === "daily") return "";
+  if (t.task_type === "recurring") {
+    const days = t.repeat_unit === "weekly" ? t.repeat_days.map((x) => DOW[x]).join(", ") : t.repeat_days.map((x) => (x >= 31 ? "last day" : ordinal(x))).join(", ");
+    const ev = t.repeat_every > 1 ? `every ${t.repeat_every} ${t.repeat_unit === "weekly" ? "weeks" : "months"}` : t.repeat_unit === "weekly" ? "weekly" : "monthly";
+    return `<span class="chip">${esc(ev)} · ${esc(days)}</span>`;
+  }
+  if (t.task_type === "project") return `<span class="chip teal">Project: ${esc(t.project_name || "—")}</span>`;
+  return `<span class="chip">One-off</span>`;
+}
+const ordinal = (n) => n + (["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
+
+function taskRowHTML({ t, c, overdue, upcoming }) {
+  const meta = [];
+  if (c) {
+    meta.push(`<span class="chip teal">Done ${esc(fmtTime(c.completed_at))}</span>`);
+    if (c.entry_mode === "manual") meta.push(`<span class="chip">Time entered</span>`);
+    if (isLate(c)) meta.push(`<span class="chip amber">Entered late</span>`);
+  } else {
+    if (overdue) meta.push(`<span class="chip red">Was due ${esc(fmtDate(t.due_date, { day: "numeric", month: "short" }))}</span>`);
+    if (upcoming) meta.push(`<span class="chip">Due ${esc(fmtDate(t.due_date))}</span>`);
+    if (t.target_time) meta.push(`<span class="chip">By ${esc(fmtHHMM(t.target_time))}</span>`);
+  }
+  if (t.priority === "high" && !c) meta.push(`<span class="chip amber">Important</span>`);
+  const tc = typeChip(t); if (tc) meta.push(tc);
+  return `<button type="button" class="task ${c ? "done" : ""}" data-task="${esc(t.id)}">
+    <span class="tick" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <span class="t-body"><span class="t-title">${esc(t.title)}</span>
+      ${t.description ? `<span class="t-desc" style="display:block">${esc(t.description)}</span>` : ""}
+      ${meta.length ? `<span class="t-meta">${meta.join("")}</span>` : ""}
+      ${c && c.note ? `<span class="t-desc" style="display:block">Note: ${esc(c.note)}</span>` : ""}
+    </span></button>`;
+}
+
+function taskSheet(taskId) {
+  const t = S.mTasks.find((x) => x.id === taskId); if (!t) return;
+  const d = S.mDate, today = istToday(), isToday = d === today;
+  const { byKey, oneOff } = mIndex();
+  const c = ONE_OFF(t) ? (oneOff.get(t.id) && oneOff.get(t.id).for_date === d ? oneOff.get(t.id) : null) : byKey.get(`${t.id}|${d}`);
+  const nowHHMM = istHHMM(new Date().toISOString());
+  openSheet(`
+    <h2>${esc(t.title)}</h2>
+    ${t.description ? `<p class="muted" style="margin-bottom:8px">${esc(t.description)}</p>` : ""}
+    <p class="faint small" style="margin-bottom:14px">${esc(fmtDate(d, { weekday: "long", day: "numeric", month: "long" }))}${t.target_time ? " · should be done by " + esc(fmtHHMM(t.target_time)) : ""}</p>
+    ${c ? `<p style="margin-bottom:12px">Marked done at <b>${esc(fmtTime(c.completed_at))}</b>${c.entry_mode === "manual" ? " (time entered)" : ""}.</p>` : ""}
+    ${isToday && !c ? `<button class="btn primary block" type="button" id="doneNow">Done now</button>
+      <p class="faint small" style="text-align:center;margin:12px 0">or, if it was finished earlier, enter the time</p>` : ""}
+    <div class="form-grid">
+      <div><label class="f" for="tm">Time it was done</label><input id="tm" class="in" type="time" value="${c ? istHHMM(c.completed_at) : (isToday ? "" : "")}" ${isToday ? `max="${nowHHMM}"` : ""}></div>
+      <div class="full"><label class="f" for="nt">Note (optional)</label><input id="nt" class="in" type="text" maxlength="200" value="${esc(c ? c.note || "" : "")}" placeholder="Anything the admin should know"></div>
+    </div>
+    <p class="err" id="sErr"></p>
+    <div class="actions">
+      ${c ? `<button class="btn danger" type="button" id="undo">Mark not done</button>` : ""}
+      <button class="btn" type="button" data-dismiss>Cancel</button>
+      <button class="btn ${isToday && !c ? "" : "primary"}" type="button" id="saveTime">${c ? "Save changes" : "Save with this time"}</button>
+    </div>`);
+  const save = async (mode) => {
+    const note = $("#nt").value.trim() || null;
+    let completed_at;
+    if (mode === "tick") completed_at = new Date().toISOString();
+    else {
+      const v = $("#tm").value; if (!v) { $("#sErr").textContent = "Enter the time the task was done."; return; }
+      if (isToday && v > nowHHMM) { $("#sErr").textContent = "That time hasn't come yet today."; return; }
+      completed_at = isoAtIST(d, v);
+    }
+    try {
+      const row = await api.saveCompletion({ task_id: t.id, manager_id: S.me.id, for_date: d, completed_at, entry_mode: mode === "tick" ? "tick" : (c && c.entry_mode === "tick" && $("#tm").value === istHHMM(c.completed_at) ? "tick" : "manual"), note });
+      S.mComps = S.mComps.filter((x) => !(x.task_id === row.task_id && x.for_date === row.for_date)).concat(row);
+      if (ONE_OFF(t)) S.mOneOff = S.mOneOff.filter((x) => x.task_id !== t.id).concat(row);
+      closeSheet(); renderManager(); toast("Saved");
+    } catch (e) { $("#sErr").textContent = e.message; }
+  };
+  $("#doneNow") && ($("#doneNow").onclick = () => save("tick"));
+  $("#saveTime").onclick = () => save("manual");
+  $("#undo") && ($("#undo").onclick = async () => {
+    try { await api.deleteCompletion(c.id); S.mComps = S.mComps.filter((x) => x.id !== c.id); S.mOneOff = S.mOneOff.filter((x) => x.id !== c.id); closeSheet(); renderManager(); toast("Marked not done"); }
+    catch (e) { $("#sErr").textContent = e.message; }
+  });
+}
+
+function managerPhotosHTML() {
+  return `
+    <p class="muted" style="margin-bottom:12px">At the end of the day, take photos of your unit to show it is clean and in order.</p>
+    <label class="camera-btn" for="cam">
+      <svg width="32" height="32" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      Take a photo
+    </label>
+    <input id="cam" type="file" accept="image/*" capture="environment" class="hidden" multiple>
+    <p class="err" id="phErr"></p>
+    <div class="group-title"><h3>Today's photos</h3><span class="faint small">${S.mPhotos.length}</span></div>
+    ${S.mPhotos.length ? `<div class="photos">${S.mPhotos.map((p) => `<div class="ph"><img src="${esc(p.url)}" alt="Unit photo taken ${esc(fmtTime(p.created_at))}" loading="lazy"><span class="cap">${esc(fmtTime(p.created_at))}${p.caption ? " · " + esc(p.caption) : ""}</span><button class="x" type="button" data-del="${esc(p.id)}" aria-label="Delete photo">×</button></div>`).join("")}</div>`
+      : `<div class="tasklist"><p class="empty">No photos yet today.</p></div>`}`;
+}
+function bindManagerPhotos() {
+  $("#cam").onchange = async (e) => {
+    const files = [...e.target.files]; if (!files.length) return;
+    const lbl = $(".camera-btn"); lbl.style.opacity = .6; lbl.lastChild.textContent = " Uploading…";
+    try {
+      for (const f of files) { const blob = await shrinkImage(f); const row = await api.uploadPhoto(S.me.id, istToday(), blob, null); if (!row.url) row.url = URL.createObjectURL(blob); S.mPhotos.push(row); }
+      toast(files.length > 1 ? "Photos uploaded" : "Photo uploaded"); renderManager();
+    } catch (er) { $("#phErr").textContent = "Upload failed: " + er.message; lbl.style.opacity = 1; }
+  };
+  app.querySelectorAll("[data-del]").forEach((b) => b.onclick = async () => {
+    if (!(await ask("Delete this photo?", "Delete photo"))) return;
+    const p = S.mPhotos.find((x) => x.id === b.dataset.del);
+    try { await api.deletePhoto(p); S.mPhotos = S.mPhotos.filter((x) => x !== p); renderManager(); } catch (e) { toast(e.message); }
+  });
+}
+function shrinkImage(file, max = 1400) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const s = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      c.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not read the photo"))), "image/jpeg", 0.8);
+    };
+    img.onerror = () => reject(new Error("Could not read the photo"));
+    img.src = url;
+  });
+}
+
+/* =========================================================================
+   ADMIN
+   ========================================================================= */
+const managers = () => S.profiles.filter((p) => p.role === "manager");
+async function loadAdmin() {
+  const to = istToday(), from = addDays(to, -31);
+  const [profiles, tasks] = await Promise.all([api.profiles(), api.tasks()]);
+  S.profiles = profiles; S.tasks = tasks;
+  const oneIds = tasks.filter(ONE_OFF).map((t) => t.id);
+  const [comps, one] = await Promise.all([api.completions({ from: addDays(from, -31), to }), api.oneOffCompletions(oneIds)]);
+  S.comps = comps; S.oneOff = one;
+  await loadAdminPhotos();
+}
+async function loadAdminPhotos() { S.aPhotos = await api.photos({ from: addDays(S.aPhotoDate, -0), to: S.aPhotoDate }); }
+
+function adminIndex() {
+  const seen = new Set(S.comps.map((c) => c.id));
+  return indexComps([...S.comps, ...S.oneOff.filter((c) => !seen.has(c.id))], S.tasks);
+}
+function statsFor(mid, d, idx) {
+  const items = dayPlan(S.tasks.filter((t) => t.manager_id === mid), idx.byKey, idx.oneOff, d);
+  const done = items.filter((x) => x.c);
+  return { items, total: items.length, done: done.length, late: done.filter((x) => isLate(x.c)).length, manual: done.filter((x) => x.c.entry_mode === "manual").length };
+}
+function rangeStats(mid, endDate, days, idx) {
+  let t = 0, d = 0, late = 0; const perDay = [];
+  for (let i = days - 1; i >= 0; i--) { const day = addDays(endDate, -i); const s = statsFor(mid, day, idx); t += s.total; d += s.done; late += s.late; perDay.push({ day, ...s }); }
+  return { total: t, done: d, late, rate: pct(d, t), perDay };
+}
+function meter(done, total) {
+  const p = pct(done, total);
+  if (p === null) return `<span class="faint small">No tasks</span>`;
+  return `<div class="meter"><div class="track"><div class="fill ${p < 50 ? "low" : p < 80 ? "mid" : ""}" style="width:${p}%"></div></div><span>${done}/${total}</span></div>`;
+}
+
+function renderAdmin() {
+  const tabs = [["overview", "Overview"], ["tasks", "Tasks"], ["photos", "Unit photos"], ["managers", "Managers"]];
+  app.innerHTML = `
+  <header class="bar" style="padding-bottom:10px"><div class="wrap-wide">
+    <div class="row between">
+      <div class="row">${brandMark(30).replace(/var\(--teal\)/g, "#fff")}<div><div class="who">KK Daily Tasks · Admin</div><div class="sub">${esc(S.me.email || "")}${DEMO ? " · demo data" : ""}</div></div></div>
+      <button type="button" id="out">Sign out</button>
+    </div>
+    <nav class="anav" role="tablist">${tabs.map(([k, l]) => `<button type="button" role="tab" data-atab="${k}" aria-selected="${S.aTab === k}">${l}</button>`).join("")}</nav>
+  </div></header>
+  <main class="wrap-wide" id="amain" style="padding-bottom:48px"></main>`;
+  $("#out").onclick = signOut;
+  app.querySelectorAll("[data-atab]").forEach((b) => b.onclick = () => { S.aTab = b.dataset.atab; S.aDetail = null; renderAdmin(); });
+  const main = $("#amain");
+  if (S.aDetail) return renderManagerDetail(main);
+  ({ overview: renderOverview, tasks: renderTaskAdmin, photos: renderPhotoAdmin, managers: renderManagersAdmin })[S.aTab](main);
+}
+
+function renderOverview(main) {
+  const idx = adminIndex(), d = S.aDate, today = istToday();
+  const photoSet = new Set(S.aPhotos.filter((p) => p.for_date === d).map((p) => p.manager_id));
+  const rows = managers().filter((m) => m.active).map((m) => ({ m, day: statsFor(m.id, d, idx), range: rangeStats(m.id, d, S.aRange, idx) }));
+  const tot = rows.reduce((a, r) => a + r.day.total, 0), dn = rows.reduce((a, r) => a + r.day.done, 0);
+  const allDone = rows.filter((r) => r.day.total && r.day.done === r.day.total).length;
+  const rT = rows.reduce((a, r) => a + r.range.total, 0), rD = rows.reduce((a, r) => a + r.range.done, 0);
+  const photosShown = d === S.aPhotoDate;
+  rows.sort((a, b) => (pct(a.day.done, a.day.total) ?? 101) - (pct(b.day.done, b.day.total) ?? 101) || a.m.full_name.localeCompare(b.m.full_name));
+  main.innerHTML = `
+    <div class="toolbar">
+      <div class="row" style="flex-wrap:wrap">
+        <h2>${d === today ? "Today" : esc(fmtDate(d, { weekday: "long", day: "numeric", month: "short" }))}</h2>
+        <input type="date" class="in" id="ovDate" value="${d}" max="${today}" min="${addDays(today, -60)}" style="width:auto">
+      </div>
+      <div class="seg" role="group" aria-label="Trend window">
+        ${[7, 30].map((n) => `<button type="button" data-range="${n}" aria-pressed="${S.aRange === n}">Last ${n} days</button>`).join("")}
+      </div>
+    </div>
+    <div class="kpis">
+      <div class="card kpi"><div class="v">${pct(dn, tot) ?? "–"}%</div><div class="l">${dn} of ${tot} tasks done ${d === today ? "so far" : ""}</div></div>
+      <div class="card kpi"><div class="v">${tot - dn}</div><div class="l">tasks left or not entered</div></div>
+      <div class="card kpi"><div class="v">${allDone}<span class="faint" style="font-size:1rem"> / ${rows.length}</span></div><div class="l">managers with every task done</div></div>
+      <div class="card kpi"><div class="v">${photosShown ? photoSet.size : "–"}<span class="faint" style="font-size:1rem"> / ${rows.length}</span></div><div class="l">units photographed</div></div>
+      <div class="card kpi"><div class="v">${pct(rD, rT) ?? "–"}%</div><div class="l">completion, last ${S.aRange} days</div></div>
+    </div>
+    <div class="card table-wrap">
+      <table class="t">
+        <thead><tr><th>Manager</th><th>Department</th><th>${d === today ? "Today" : "This day"}</th><th>Last entry</th><th>Photo</th><th>Last ${S.aRange} days</th><th class="num">Late entries</th></tr></thead>
+        <tbody>${rows.map(({ m, day, range }) => {
+          const lastC = day.items.map((x) => x.c).filter(Boolean).sort((a, b) => b.completed_at.localeCompare(a.completed_at))[0];
+          return `<tr class="click" data-mgr="${esc(m.id)}" tabindex="0">
+            <td><b>${esc(titleCase(m.full_name))}</b></td>
+            <td class="muted">${esc(m.department || "—")}</td>
+            <td>${meter(day.done, day.total)}</td>
+            <td class="muted">${lastC ? esc(fmtTime(lastC.completed_at)) : "—"}</td>
+            <td>${photosShown ? (photoSet.has(m.id) ? `<span class="chip teal">Yes</span>` : `<span class="chip red">No</span>`) : `<span class="faint small">—</span>`}</td>
+            <td>${meter(range.done, range.total)}</td>
+            <td class="num">${range.late || ""}</td></tr>`;
+        }).join("")}</tbody>
+      </table>
+      ${rows.length ? "" : `<p class="empty">No managers yet. Add them in the Managers tab.</p>`}
+    </div>
+    <p class="faint small" style="margin-top:8px">Sorted lowest completion first. Click a manager for their task-by-task detail. Late entries = filled in on a later day.</p>`;
+  $("#ovDate").onchange = async (e) => { if (!e.target.value) return; S.aDate = e.target.value; if (S.aDate < addDays(today, -60)) return; S.aPhotoDate = S.aDate; await loadAdminPhotos(); renderAdmin(); };
+  main.querySelectorAll("[data-range]").forEach((b) => b.onclick = () => { S.aRange = +b.dataset.range; renderAdmin(); });
+  main.querySelectorAll("[data-mgr]").forEach((r) => { const go = () => { S.aDetail = r.dataset.mgr; renderAdmin(); }; r.onclick = go; r.onkeydown = (e) => { if (e.key === "Enter") go(); }; });
+}
+
+async function renderManagerDetail(main) {
+  const m = S.profiles.find((p) => p.id === S.aDetail), idx = adminIndex(), today = istToday();
+  const range = rangeStats(m.id, today, 30, idx);
+  const myTasks = S.tasks.filter((t) => t.manager_id === m.id);
+  const photos = await api.photos({ managerId: m.id, from: addDays(today, -13), to: today });
+  const photoDays = new Set(photos.map((p) => p.for_date));
+  const todayPlan = statsFor(m.id, S.aDate, idx);
+  // per-task reliability over 30 days
+  const perTask = myTasks.filter((t) => t.active).map((t) => {
+    let due = 0, done = 0, late = 0, times = [];
+    range.perDay.forEach((pd) => pd.items.filter((x) => x.t.id === t.id).forEach((x) => { due++; if (x.c) { done++; if (isLate(x.c)) late++; times.push(istHHMM(x.c.completed_at)); } }));
+    times.sort(); const median = times.length ? times[Math.floor(times.length / 2)] : null;
+    return { t, due, done, late, median };
+  });
+  main.innerHTML = `
+    <div class="toolbar"><div class="row"><button class="btn ghost" type="button" id="back">‹ All managers</button></div></div>
+    <div class="row between" style="flex-wrap:wrap;margin-bottom:14px">
+      <div><h1>${esc(titleCase(m.full_name))}</h1><p class="muted">${esc(m.department || "No department set")}</p></div>
+      <button class="btn primary" type="button" id="assign">Assign a task</button>
+    </div>
+    <div class="grid2">
+      <div class="card pad">
+        <div class="row between"><h3>Completion, last 30 days</h3><b>${range.rate ?? "–"}%</b></div>
+        <div class="bars" aria-hidden="true">${range.perDay.map((p) => `<div class="b ${p.total ? "" : "none"}" style="height:${p.total ? Math.max(2, (p.done / p.total) * 100) : 2}%" title="${esc(fmtDate(p.day))}: ${p.done}/${p.total}"></div>`).join("")}</div>
+        <div class="bars-x"><span>${esc(fmtDate(range.perDay[0].day, { day: "numeric", month: "short" }))}</span><span style="text-align:right">Today</span></div>
+        <p class="faint small" style="margin-top:8px">${range.done} of ${range.total} tasks done · ${range.late} entered late</p>
+      </div>
+      <div class="card pad">
+        <div class="row between"><h3>${S.aDate === today ? "Today" : esc(fmtDate(S.aDate))}</h3><span>${todayPlan.done}/${todayPlan.total}</span></div>
+        <div style="margin-top:8px">${todayPlan.items.length ? todayPlan.items.map((x) => `<div class="row between" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>${esc(x.t.title)}</span>${x.c ? `<span class="chip teal">${esc(fmtTime(x.c.completed_at))}${isLate(x.c) ? " · late" : ""}</span>` : `<span class="chip ${x.overdue ? "red" : "amber"}">${x.overdue ? "Overdue" : "Pending"}</span>`}</div>`).join("") : `<p class="muted">No tasks due.</p>`}</div>
+      </div>
+    </div>
+    <h2 style="margin:24px 0 10px">Task by task, last 30 days</h2>
+    <div class="card table-wrap"><table class="t">
+      <thead><tr><th>Task</th><th>Type</th><th>Done</th><th>Usual time</th><th class="num">Late</th></tr></thead>
+      <tbody>${perTask.map((r) => `<tr><td>${esc(r.t.title)}</td><td>${typeChip(r.t) || '<span class="chip">Daily</span>'}</td><td>${r.due ? meter(r.done, r.due) : '<span class="faint small">Not due yet</span>'}</td><td class="muted">${r.median ? esc(fmtHHMM(r.median)) : "—"}</td><td class="num">${r.late || ""}</td></tr>`).join("") || `<tr><td colspan="5" class="empty">No tasks assigned yet.</td></tr>`}</tbody>
+    </table></div>
+    <h2 style="margin:24px 0 10px">Unit photos, last 14 days <span class="faint small">(${photoDays.size} of 14 days)</span></h2>
+    ${photos.length ? `<div class="photos">${photos.slice().reverse().map((p) => `<button type="button" class="ph" data-photo="${esc(p.id)}" style="padding:0"><img src="${esc(p.url)}" alt="Unit photo ${esc(fmtDate(p.for_date))}" loading="lazy"><span class="cap">${esc(fmtDate(p.for_date, { day: "numeric", month: "short" }))} · ${esc(fmtTime(p.created_at))}</span></button>`).join("")}</div>` : `<div class="card"><p class="empty">No photos in the last 14 days.</p></div>`}`;
+  $("#back").onclick = () => { S.aDetail = null; renderAdmin(); };
+  $("#assign").onclick = () => taskForm(null, [m.id]);
+  main.querySelectorAll("[data-photo]").forEach((b) => b.onclick = () => photoLightbox(photos.find((p) => p.id === b.dataset.photo)));
+}
+
+function photoLightbox(p) {
+  const m = S.profiles.find((x) => x.id === p.manager_id);
+  openSheet(`<div class="lightbox"><img src="${esc(p.url)}" alt="Unit photo"><p style="margin-top:10px"><b>${esc(titleCase(m ? m.full_name : ""))}</b> · ${esc(fmtDate(p.for_date))} · ${esc(fmtTime(p.created_at))}</p>${p.caption ? `<p class="muted">${esc(p.caption)}</p>` : ""}</div><div class="actions"><button class="btn danger" type="button" id="delP">Delete photo</button><button class="btn" type="button" data-dismiss>Close</button></div>`, true);
+  $("#delP").onclick = async () => { if (!(await ask("Delete this photo permanently?", "Delete photo"))) return; await api.deletePhoto(p); S.aPhotos = S.aPhotos.filter((x) => x.id !== p.id); closeSheet(); renderAdmin(); toast("Photo deleted"); };
+}
+
+/* ---------- Task admin ---------- */
+const TYPE_LABEL = { daily: "Daily", recurring: "Recurring", adhoc: "One-off", project: "Project" };
+function renderTaskAdmin(main) {
+  const f = S.aTaskFilter, idx = adminIndex();
+  const byId = new Map(S.profiles.map((p) => [p.id, p]));
+  let list = S.tasks.filter((t) => (f.manager === "all" || t.manager_id === f.manager) && (f.type === "all" || t.task_type === f.type) && (!f.q || t.title.toLowerCase().includes(f.q.toLowerCase())));
+  list.sort((a, b) => (byId.get(a.manager_id)?.full_name || "").localeCompare(byId.get(b.manager_id)?.full_name || "") || (b.active - a.active) || a.sort_order - b.sort_order);
+  main.innerHTML = `
+    <div class="toolbar">
+      <div class="row" style="flex-wrap:wrap">
+        <select class="in" id="fm" style="width:auto"><option value="all">All managers</option>${managers().map((m) => `<option value="${esc(m.id)}" ${f.manager === m.id ? "selected" : ""}>${esc(titleCase(m.full_name))}</option>`).join("")}</select>
+        <select class="in" id="ft" style="width:auto"><option value="all">All types</option>${Object.entries(TYPE_LABEL).map(([k, l]) => `<option value="${k}" ${f.type === k ? "selected" : ""}>${l}</option>`).join("")}</select>
+        <input class="in" id="fq" type="search" placeholder="Search tasks" value="${esc(f.q)}" style="width:200px">
+      </div>
+      <div class="row"><button class="btn" type="button" id="bulk">Add many at once</button><button class="btn primary" type="button" id="newT">Assign a task</button></div>
+    </div>
+    <div class="card table-wrap"><table class="t">
+      <thead><tr><th>Task</th><th>Manager</th><th>Type / schedule</th><th>Due</th><th>Status</th><th></th></tr></thead>
+      <tbody>${list.map((t) => {
+        const m = byId.get(t.manager_id); const c = ONE_OFF(t) ? idx.oneOff.get(t.id) : null;
+        const status = !t.active ? `<span class="chip">Paused</span>` : ONE_OFF(t) ? (c ? `<span class="chip teal">Done ${esc(fmtDate(c.for_date, { day: "numeric", month: "short" }))}</span>` : t.due_date < istToday() ? `<span class="chip red">Overdue</span>` : `<span class="chip amber">Open</span>`) : `<span class="chip teal">Active</span>`;
+        return `<tr><td><b>${esc(t.title)}</b>${t.priority === "high" ? ` <span class="chip amber">Important</span>` : ""}${t.description ? `<div class="faint small">${esc(t.description)}</div>` : ""}</td>
+          <td>${esc(m ? titleCase(m.full_name) : "—")}</td>
+          <td>${t.task_type === "daily" ? "Daily" : typeChip(t)}${t.target_time ? ` <span class="faint small">by ${esc(fmtHHMM(t.target_time))}</span>` : ""}</td>
+          <td class="muted">${t.due_date ? esc(fmtDate(t.due_date)) : "—"}</td>
+          <td>${status}</td>
+          <td class="num"><button class="btn ghost" type="button" data-edit="${esc(t.id)}">Edit</button></td></tr>`;
+      }).join("") || `<tr><td colspan="6" class="empty">No tasks match. Use “Assign a task” to add one.</td></tr>`}</tbody>
+    </table></div>
+    <p class="faint small" style="margin-top:8px">${list.length} tasks shown.</p>`;
+  $("#fm").onchange = (e) => { f.manager = e.target.value; renderAdmin(); };
+  $("#ft").onchange = (e) => { f.type = e.target.value; renderAdmin(); };
+  $("#fq").oninput = (e) => { f.q = e.target.value; clearTimeout(window._fq); window._fq = setTimeout(() => { renderAdmin(); const q = $("#fq"); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }, 250); };
+  $("#newT").onclick = () => taskForm(null, f.manager !== "all" ? [f.manager] : []);
+  $("#bulk").onclick = () => bulkForm(f.manager !== "all" ? [f.manager] : []);
+  main.querySelectorAll("[data-edit]").forEach((b) => b.onclick = () => taskForm(S.tasks.find((t) => t.id === b.dataset.edit)));
+}
+
+function managerChecks(selected) {
+  return `<div class="row between" style="margin-bottom:4px"><label class="f" style="margin:0">Assign to</label><span><button type="button" class="btn ghost small" id="selAll" style="padding:2px 8px">All</button><button type="button" class="btn ghost small" id="selNone" style="padding:2px 8px">None</button></span></div>
+  <div class="checks">${managers().filter((m) => m.active).map((m) => `<label><input type="checkbox" name="mg" value="${esc(m.id)}" ${selected.includes(m.id) ? "checked" : ""}> ${esc(titleCase(m.full_name))}</label>`).join("")}</div>`;
+}
+function bindChecks() {
+  $("#selAll").onclick = () => layer.querySelectorAll("[name=mg]").forEach((c) => c.checked = true);
+  $("#selNone").onclick = () => layer.querySelectorAll("[name=mg]").forEach((c) => c.checked = false);
+}
+
+function taskForm(task, preselect = []) {
+  const editing = !!task, today = istToday();
+  const t = task || { task_type: "daily", repeat_unit: "weekly", repeat_days: [], repeat_every: 1, priority: "normal", start_date: today };
+  let type = t.task_type, unit = t.repeat_unit || "weekly", days = new Set(t.repeat_days || []);
+  const draw = () => {
+    openSheet(`
+      <h2>${editing ? "Edit task" : "Assign a task"}</h2>
+      <p class="faint small" style="margin-bottom:14px">${editing ? esc(titleCase(S.profiles.find((p) => p.id === t.manager_id)?.full_name || "")) : "Pick one or more managers. Each gets their own copy of the task."}</p>
+      <div class="form-grid">
+        <div class="full"><label class="f" for="tt">Task</label><input id="tt" class="in" value="${esc(t.title || "")}" placeholder="e.g. Update production in MIS sheet" autofocus></div>
+        <div class="full"><label class="f" for="td">Details (optional)</label><textarea id="td" class="in" placeholder="Steps, standard, or what to check">${esc(t.description || "")}</textarea></div>
+        <div class="full"><label class="f">Type</label><div class="seg" role="group">${Object.entries(TYPE_LABEL).map(([k, l]) => `<button type="button" data-type="${k}" aria-pressed="${type === k}">${l}</button>`).join("")}</div></div>
+        ${type === "recurring" ? `
+          <div><label class="f">Repeats</label><div class="seg" role="group">${["weekly", "monthly"].map((u) => `<button type="button" data-unit="${u}" aria-pressed="${unit === u}">${u === "weekly" ? "Weekly" : "Monthly"}</button>`).join("")}</div></div>
+          <div><label class="f" for="ev">Every</label><select id="ev" class="in">${(unit === "weekly" ? [[1, "week"], [2, "2 weeks (fortnightly)"], [4, "4 weeks"]] : [[1, "month"], [2, "2 months"], [3, "3 months (quarterly)"], [6, "6 months"], [12, "12 months (yearly)"]]).map(([v, l]) => `<option value="${v}" ${t.repeat_every == v ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+          <div class="full"><label class="f">${unit === "weekly" ? "On these days" : "On these dates"}</label><div class="days">${unit === "weekly" ? DOW.map((l, i) => `<button type="button" data-dd="${i}" aria-pressed="${days.has(i)}">${l}</button>`).join("") : Array.from({ length: 31 }, (_, i) => i + 1).map((n) => `<button type="button" data-dd="${n}" aria-pressed="${days.has(n)}">${n === 31 ? "Last" : n}</button>`).join("")}</div></div>
+        ` : ""}
+        ${type === "project" ? `<div class="full"><label class="f" for="pn">Project name</label><input id="pn" class="in" list="projList" value="${esc(t.project_name || "")}" placeholder="e.g. New KK website"><datalist id="projList">${[...new Set(S.tasks.map((x) => x.project_name).filter(Boolean))].map((p) => `<option value="${esc(p)}">`).join("")}</datalist></div>` : ""}
+        <div><label class="f" for="sd">${ONE_OFF({ task_type: type }) ? "Show from" : "Starts on"}</label><input id="sd" class="in" type="date" value="${esc(t.start_date || today)}"></div>
+        ${ONE_OFF({ task_type: type }) ? `<div><label class="f" for="dd">Due date</label><input id="dd" class="in" type="date" value="${esc(t.due_date || today)}"></div>` : `<div><label class="f" for="ed">Ends on (optional)</label><input id="ed" class="in" type="date" value="${esc(t.end_date || "")}"></div>`}
+        <div><label class="f" for="tg">Should be done by (optional)</label><input id="tg" class="in" type="time" value="${esc((t.target_time || "").slice(0, 5))}"></div>
+        <div><label class="f" for="pr">Priority</label><select id="pr" class="in"><option value="normal">Normal</option><option value="high" ${t.priority === "high" ? "selected" : ""}>Important</option><option value="low" ${t.priority === "low" ? "selected" : ""}>Low</option></select></div>
+        ${editing ? `<div class="full"><label class="row"><input type="checkbox" id="ac" ${t.active ? "checked" : ""}> Active (untick to pause without losing history)</label></div>` : `<div class="full">${managerChecks(preselect)}</div>`}
+      </div>
+      <p class="err" id="tErr"></p>
+      <div class="actions">
+        ${editing ? `<button class="btn danger" type="button" id="delT">Delete</button>` : ""}
+        <button class="btn" type="button" data-dismiss>Cancel</button>
+        <button class="btn primary" type="button" id="saveT">${editing ? "Save changes" : "Assign task"}</button>
+      </div>`, true);
+    const keep = () => { t.title = $("#tt").value; t.description = $("#td").value; t.start_date = $("#sd").value; t.target_time = $("#tg").value; t.priority = $("#pr").value; if ($("#dd")) t.due_date = $("#dd").value; if ($("#ed")) t.end_date = $("#ed").value; if ($("#pn")) t.project_name = $("#pn").value; if ($("#ev")) t.repeat_every = +$("#ev").value; const sel = [...layer.querySelectorAll("[name=mg]:checked")].map((c) => c.value); if (!editing) preselect = sel; };
+    layer.querySelectorAll("[data-type]").forEach((b) => b.onclick = () => { keep(); type = b.dataset.type; draw(); });
+    layer.querySelectorAll("[data-unit]").forEach((b) => b.onclick = () => { keep(); if (unit !== b.dataset.unit) { unit = b.dataset.unit; days = new Set(); t.repeat_every = 1; } draw(); });
+    layer.querySelectorAll("[data-dd]").forEach((b) => b.onclick = () => { const v = +b.dataset.dd; days.has(v) ? days.delete(v) : days.add(v); b.setAttribute("aria-pressed", days.has(v)); });
+    if (!editing) bindChecks();
+    $("#saveT").onclick = async () => {
+      keep();
+      const err = (m) => { $("#tErr").textContent = m; };
+      if (!t.title.trim()) return err("Write what the task is.");
+      if (type === "recurring" && !days.size) return err(unit === "weekly" ? "Pick at least one day of the week." : "Pick at least one date.");
+      if (ONE_OFF({ task_type: type }) && !t.due_date) return err("Set a due date.");
+      if (type === "project" && !(t.project_name || "").trim()) return err("Name the project.");
+      const targets = editing ? [t.manager_id] : preselect;
+      if (!targets.length) return err("Pick at least one manager.");
+      const base = {
+        title: t.title.trim(), description: (t.description || "").trim() || null, task_type: type,
+        repeat_unit: type === "recurring" ? unit : null, repeat_days: type === "recurring" ? [...days].sort((a, b) => a - b) : null,
+        repeat_every: type === "recurring" ? t.repeat_every || 1 : 1, project_name: type === "project" ? t.project_name.trim() : null,
+        priority: t.priority, target_time: t.target_time || null, start_date: t.start_date || today,
+        due_date: ONE_OFF({ task_type: type }) ? t.due_date : null, end_date: !ONE_OFF({ task_type: type }) && t.end_date ? t.end_date : null,
+        active: editing ? $("#ac").checked : true,
+      };
+      const rows = editing ? [{ ...base, id: t.id, manager_id: t.manager_id }] : targets.map((mid) => ({ ...base, manager_id: mid, created_by: DEMO ? null : S.me.id, sort_order: S.tasks.filter((x) => x.manager_id === mid).length }));
+      $("#saveT").disabled = true;
+      try {
+        const saved = await api.saveTasks(rows);
+        saved.forEach((r) => { const i = S.tasks.findIndex((x) => x.id === r.id); if (i >= 0) S.tasks[i] = r; else S.tasks.push(r); });
+        closeSheet(); renderAdmin(); toast(editing ? "Task saved" : `Task assigned to ${targets.length} ${targets.length === 1 ? "manager" : "managers"}`);
+      } catch (e) { err(e.message); $("#saveT").disabled = false; }
+    };
+    $("#delT") && ($("#delT").onclick = async () => {
+      if (!(await ask("Delete this task and all its history? To keep the history, pause it instead (untick Active).", "Delete task"))) { taskForm(t); return; }
+      await api.deleteTask(t.id); S.tasks = S.tasks.filter((x) => x.id !== t.id); S.comps = S.comps.filter((c) => c.task_id !== t.id); closeSheet(); renderAdmin(); toast("Task deleted");
+    });
+  };
+  draw();
+}
+
+function bulkForm(preselect = []) {
+  openSheet(`
+    <h2>Add many daily tasks at once</h2>
+    <p class="muted small" style="margin-bottom:14px">One task per line. Each line becomes a daily task for every manager you tick. Add a time after a | to set “done by”, e.g. <i>Check attendance | 09:30</i>.</p>
+    <label class="f" for="bl">Tasks</label>
+    <textarea id="bl" class="in" style="min-height:180px" placeholder="Check worker attendance | 09:30&#10;Update production in MIS sheet | 18:30&#10;Lock store and switch off power"></textarea>
+    <div style="margin-top:12px">${managerChecks(preselect)}</div>
+    <p class="err" id="bErr"></p>
+    <div class="actions"><button class="btn" type="button" data-dismiss>Cancel</button><button class="btn primary" type="button" id="bSave">Add tasks</button></div>`, true);
+  bindChecks();
+  $("#bSave").onclick = async () => {
+    const lines = $("#bl").value.split("\n").map((l) => l.trim()).filter(Boolean);
+    const mids = [...layer.querySelectorAll("[name=mg]:checked")].map((c) => c.value);
+    if (!lines.length) return ($("#bErr").textContent = "Write at least one task.");
+    if (!mids.length) return ($("#bErr").textContent = "Pick at least one manager.");
+    const rows = [];
+    for (const mid of mids) {
+      let order = S.tasks.filter((x) => x.manager_id === mid).length;
+      for (const l of lines) {
+        const [title, time] = l.split("|").map((s) => s.trim());
+        const tm = /^\d{1,2}:\d{2}$/.test(time || "") ? time.padStart(5, "0") : null;
+        rows.push({ manager_id: mid, title, task_type: "daily", priority: "normal", target_time: tm, start_date: istToday(), repeat_every: 1, sort_order: order++, created_by: DEMO ? null : S.me.id, active: true });
+      }
+    }
+    $("#bSave").disabled = true;
+    try { const saved = await api.saveTasks(rows); S.tasks.push(...saved); closeSheet(); renderAdmin(); toast(`${saved.length} tasks added`); }
+    catch (e) { $("#bErr").textContent = e.message; $("#bSave").disabled = false; }
+  };
+}
+
+/* ---------- Photos admin ---------- */
+function renderPhotoAdmin(main) {
+  const d = S.aPhotoDate, today = istToday();
+  const by = new Map(); S.aPhotos.filter((p) => p.for_date === d).forEach((p) => { if (!by.has(p.manager_id)) by.set(p.manager_id, []); by.get(p.manager_id).push(p); });
+  const act = managers().filter((m) => m.active), missing = act.filter((m) => !by.has(m.id));
+  main.innerHTML = `
+    <div class="toolbar"><div class="row" style="flex-wrap:wrap"><h2>Unit photos</h2><input type="date" class="in" id="pd" value="${d}" max="${today}" style="width:auto"></div>
+      <span class="muted">${by.size} of ${act.length} units photographed</span></div>
+    ${missing.length ? `<div class="card pad" style="margin-bottom:16px"><h3 style="margin-bottom:8px">No photo yet</h3><div class="missing-list">${missing.map((m) => `<span class="chip red">${esc(titleCase(m.full_name))}</span>`).join("")}</div></div>` : ""}
+    ${[...by.entries()].map(([mid, ps]) => { const m = S.profiles.find((p) => p.id === mid); return `<div class="photo-day"><div class="group-title"><h3>${esc(titleCase(m ? m.full_name : ""))} <span class="faint small">· ${esc(m?.department || "")}</span></h3><span class="faint small">${ps.length}</span></div><div class="photos">${ps.map((p) => `<button type="button" class="ph" data-photo="${esc(p.id)}" style="padding:0"><img src="${esc(p.url)}" alt="Unit photo" loading="lazy"><span class="cap">${esc(fmtTime(p.created_at))}</span></button>`).join("")}</div></div>`; }).join("") || `<div class="card"><p class="empty">No photos for this day.</p></div>`}`;
+  $("#pd").onchange = async (e) => { if (!e.target.value) return; S.aPhotoDate = e.target.value; await loadAdminPhotos(); renderAdmin(); };
+  main.querySelectorAll("[data-photo]").forEach((b) => b.onclick = () => photoLightbox(S.aPhotos.find((p) => p.id === b.dataset.photo)));
+}
+
+/* ---------- Managers admin ---------- */
+const randomPin = () => String(Math.floor(100000 + Math.random() * 900000));
+function renderManagersAdmin(main) {
+  const list = managers();
+  main.innerHTML = `
+    <div class="toolbar"><h2>Managers</h2><button class="btn primary" type="button" id="addM">Add manager</button></div>
+    <div class="card table-wrap"><table class="t">
+      <thead><tr><th>Name</th><th>Department / unit</th><th>Tasks</th><th>Status</th><th></th></tr></thead>
+      <tbody>${list.map((m) => `<tr>
+        <td><b>${esc(titleCase(m.full_name))}</b></td>
+        <td><input class="in" data-dept="${esc(m.id)}" value="${esc(m.department || "")}" placeholder="Set department" style="max-width:220px;padding:6px 10px"></td>
+        <td class="muted">${S.tasks.filter((t) => t.manager_id === m.id && t.active).length} active</td>
+        <td>${m.active ? `<span class="chip teal">Can sign in</span>` : `<span class="chip">Switched off</span>`}</td>
+        <td class="num" style="white-space:nowrap"><button class="btn ghost" type="button" data-pin="${esc(m.id)}">New PIN</button><button class="btn ghost" type="button" data-act="${esc(m.id)}">${m.active ? "Switch off" : "Switch on"}</button></td></tr>`).join("")}</tbody>
+    </table></div>
+    <p class="faint small" style="margin-top:8px">Department changes save when you leave the box. Switching a manager off stops sign-in and hides them from reports; history is kept.</p>`;
+  $("#addM").onclick = addManagerForm;
+  main.querySelectorAll("[data-dept]").forEach((i) => i.onchange = async () => { await api.updateProfile(i.dataset.dept, { department: i.value.trim() || null }); S.profiles.find((p) => p.id === i.dataset.dept).department = i.value.trim() || null; toast("Department saved"); });
+  main.querySelectorAll("[data-act]").forEach((b) => b.onclick = async () => {
+    const m = S.profiles.find((p) => p.id === b.dataset.act);
+    try { await api.manageManager({ action: "set_active", user_id: m.id, active: !m.active }); m.active = !m.active; renderAdmin(); toast(m.active ? "Switched on" : "Switched off"); } catch (e) { toast(e.message); }
+  });
+  main.querySelectorAll("[data-pin]").forEach((b) => b.onclick = async () => {
+    const m = S.profiles.find((p) => p.id === b.dataset.pin), pin = randomPin();
+    if (!(await ask(`Give ${titleCase(m.full_name)} a new PIN? The old PIN stops working.`, "Give new PIN", false))) return;
+    try { await api.manageManager({ action: "reset_pin", user_id: m.id, pin }); pinShown(m.full_name, pin); } catch (e) { toast(e.message); }
+  });
+}
+function pinShown(name, pin) {
+  openSheet(`<h2>New PIN for ${esc(titleCase(name))}</h2><p class="muted">Tell the manager this PIN. It is shown only once.</p><p style="font-size:2.4rem;font-weight:700;letter-spacing:.3em;margin:16px 0">${esc(pin)}</p><div class="actions"><button class="btn primary" type="button" data-dismiss>Done</button></div>`);
+}
+function addManagerForm() {
+  openSheet(`<h2>Add manager</h2>
+    <div class="form-grid" style="margin-top:12px">
+      <div class="full"><label class="f" for="mn">Full name</label><input id="mn" class="in" autofocus placeholder="e.g. SANJAY DAS"></div>
+      <div class="full"><label class="f" for="md">Department / unit</label><input id="md" class="in" placeholder="e.g. Packing"></div>
+    </div>
+    <p class="err" id="mErr"></p>
+    <div class="actions"><button class="btn" type="button" data-dismiss>Cancel</button><button class="btn primary" type="button" id="mSave">Add and create PIN</button></div>`);
+  $("#mSave").onclick = async () => {
+    const name = $("#mn").value.trim().toUpperCase(); if (!name) return ($("#mErr").textContent = "Enter the manager's name.");
+    const pin = randomPin(); $("#mSave").disabled = true;
+    try {
+      await api.manageManager({ action: "create", full_name: name, department: $("#md").value.trim() || null, email: slugEmail(name), pin });
+      S.profiles = await api.profiles(); managersCache = []; renderAdmin(); pinShown(name, pin);
+    } catch (e) { $("#mErr").textContent = e.message; $("#mSave").disabled = false; }
+  };
+}
+
+/* =========================================================================
+   Boot
+   ========================================================================= */
+async function boot() {
+  app.innerHTML = `<div class="spinner" aria-label="Loading"></div>`;
+  try {
+    if (!S.me) S.me = await api.me();
+    if (!S.me) return renderLogin();
+    if (S.me.role === "admin") { await loadAdmin(); renderAdmin(); }
+    else { await loadManager(); renderManager(); }
+  } catch (e) {
+    app.innerHTML = `<main class="login"><div class="card"><h2>Something went wrong</h2><p class="muted" style="margin:8px 0 16px">${esc(e.message)}</p><button class="btn primary" type="button" onclick="location.reload()">Reload</button> <button class="btn" type="button" id="so">Sign out</button></div></main>`;
+    $("#so").onclick = signOut;
+  }
+}
+// Refresh the manager view when the phone comes back to the app (date may have rolled over)
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible" || !S.me) return;
+  if (S.me.role === "manager") { const t = istToday(); if (S.mDate > t || S.mDate < addDays(t, -CFG.BACKFILL_DAYS)) S.mDate = t; loadManager().then(renderManager).catch(() => {}); }
+});
+boot();
+</script>
+</body>
+</html>
