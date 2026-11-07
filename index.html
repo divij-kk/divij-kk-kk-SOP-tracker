@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
 <script>
 /* ===================== CONFIG — fill these two after creating Supabase ===================== */
 window.KK_CONFIG = {
@@ -369,9 +369,11 @@ function supabaseApi() {
     async deletePhoto(p) { await sb.storage.from("unit-photos").remove([p.storage_path]); ok(await sb.from("unit_photos").delete().eq("id", p.id)); },
     async updateProfile(id, patch) { ok(await sb.from("profiles").update(patch).eq("id", id)); },
     async manageManager(body) {
-      const { data, error } = await sb.functions.invoke("manage-manager", { body });
-      if (error) { let m = error.message; try { m = (await error.context.json()).error || m; } catch (_) {} throw new Error(m); }
-      return data;
+      if (body.action === "create") ok(await sb.rpc("admin_create_manager", { p_full_name: body.full_name, p_department: body.department, p_email: body.email, p_pin: body.pin }));
+      else if (body.action === "reset_pin") ok(await sb.rpc("admin_reset_pin", { p_user_id: body.user_id, p_pin: body.pin }));
+      else if (body.action === "set_active") ok(await sb.rpc("admin_set_active", { p_user_id: body.user_id, p_active: body.active }));
+      else throw new Error("Unknown action.");
+      return { ok: true };
     },
   };
 }

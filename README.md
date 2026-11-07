@@ -1,18 +1,18 @@
 # KK Daily Tasks — managers' daily task tracker
 
 A phone-first web app for the 18 floor managers at Kendo Sales, plus an admin dashboard.
-Same stack as the KK ERP: **Supabase** (database, logins, photo storage) + **Cloudflare Pages** (hosting). Both free tiers are enough.
+Same stack as the KK ERP: **GitHub** (code) + **Supabase** (database, logins, photo storage) + **Cloudflare Pages** (hosting). Free tiers are enough.
 
-**Try it first without setting anything up:** open `index.html` in a browser. With no Supabase keys filled in it runs in demo mode with sample data (any PIN works; admin tab works with any password).
+**Demo mode:** add `?demo` to the app's address to try it with sample data (any PIN works).
 
 ## What's in the folder
 
 | File | What it is |
 |---|---|
-| `index.html` | The whole app (manager screens + admin). This is what gets hosted. |
+| `index.html` | The whole app (manager screens + admin). Hosted on Cloudflare Pages. |
 | `supabase/schema.sql` | Tables, security rules, photo bucket. Run once. |
-| `supabase/functions/manage-manager/index.ts` | Lets the admin add managers, reset PINs, switch logins off. |
-| `scripts/create-accounts.mjs` | One-time: creates the admin login and all 18 manager logins with PINs. |
+| `supabase/admin-functions.sql` | Admin tools: add manager, new PIN, switch login off. Run once. |
+| `supabase/setup-accounts.sql` | Creates the admin login + all 18 manager logins and shows their PINs. Run once. |
 
 ## How it works
 
@@ -35,51 +35,17 @@ Same stack as the KK ERP: **Supabase** (database, logins, photo storage) + **Clo
 - **Unit photos** — all photos for a date, grouped by manager, with the list of units missing a photo.
 - **Managers** — set departments, add a manager (PIN generated and shown once), give a new PIN, switch a login off.
 
-## Setup (about 20 minutes)
+## Setup (all in the Supabase dashboard, no terminal)
 
-### 1. Supabase
-1. Create a new project at supabase.com (region: Mumbai). Or reuse the ERP project — the table names don't clash.
-2. **SQL Editor → New query** → paste all of `supabase/schema.sql` → Run.
-3. **Authentication → Providers → Email**: keep Email on, turn **Confirm email off**.
-4. **Authentication → Sign In / Providers**: turn **Allow new users to sign up off** (only the admin creates accounts).
-5. **Project Settings → API**: copy the *Project URL*, the *anon public* key and the *service_role* key (keep that one secret).
-
-### 2. Admin + manager logins
-On your computer, in this folder:
-```bash
-npm install @supabase/supabase-js
-SUPABASE_URL=https://YOUR-PROJECT.supabase.co \
-SUPABASE_SERVICE_ROLE_KEY=YOUR-SERVICE-ROLE-KEY \
-ADMIN_PASSWORD='a-strong-password' \
-node scripts/create-accounts.mjs
-```
-It prints each manager's PIN and saves `manager-pins.csv`. Hand out the PINs, then delete the file.
-
-### 3. The admin function (for adding managers / new PINs from the app)
-```bash
-npm install -g supabase
-supabase login
-supabase link --project-ref YOUR-PROJECT-REF
-supabase functions deploy manage-manager
-```
-
-### 4. Point the app at Supabase
-In `index.html`, near the top, fill in:
-```js
-SUPABASE_URL: "https://YOUR-PROJECT.supabase.co",
-SUPABASE_ANON_KEY: "YOUR-ANON-KEY",
-```
-(The anon key is meant to be public; the database rules do the protecting.)
-
-### 5. Host on Cloudflare Pages
-Cloudflare dashboard → **Workers & Pages → Create → Pages → Upload assets** → upload just `index.html` → name it e.g. `kk-tasks`. You get `https://kk-tasks.pages.dev`. Optionally attach `tasks.kkumbrellas.com`.
-Or put this folder in a GitHub repo and connect it, like the ERP — every push redeploys.
-
-On each manager's phone: open the link in Chrome → menu → **Add to Home screen**, so it opens like an app.
+1. **SQL Editor → New query** → paste `supabase/schema.sql` → **Run**.
+2. **New query** → paste `supabase/admin-functions.sql` → **Run**.
+3. **New query** → paste `supabase/setup-accounts.sql`, replace `CHANGE-ME` with the admin password → **Run**. The results table lists every manager's PIN; copy it somewhere safe.
+4. **Authentication → Sign In / Providers**: *Allow new users to sign up* OFF, *Confirm email* OFF.
+5. **Cloudflare → Workers & Pages → Create → Pages → Connect to Git** → pick this repo → no build command, output directory `/` → Deploy. Every push to `main` redeploys.
 
 ## Rules worth knowing
 - Times are always India time, whatever the phone's clock is set to.
 - Managers can fill or correct the last **7 days**; change `BACKFILL_DAYS` in `index.html` (and the `- 7` in the `comp_*` policies in `schema.sql`) to change that.
 - Photos can only be added for today, and a manager can delete only today's photos. Photos are private — the admin sees them through short-lived links.
-- More admins: create their login in Supabase (Authentication → Add user), then in SQL Editor: `update profiles set role='admin' where email='them@example.com';`
+- More admins: create their login in Supabase (Authentication → Add user, tick auto-confirm), then in SQL Editor: `update profiles set role='admin' where email='them@example.com';`
 - Manager logins use made-up emails like `anup.roy@staff.kkumbrellas.com`; no mail is ever sent to them.
