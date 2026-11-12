@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 /* ===================== CONFIG — fill these two after creating Supabase ===================== */
 window.KK_CONFIG = {
@@ -170,6 +171,12 @@ textarea.in{min-height:72px;resize:vertical}
 .banner button{background:none;border:1px solid currentColor;color:inherit;border-radius:999px;padding:4px 12px;font-weight:600;white-space:nowrap}
 
 /* photos */
+.xl-diff{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}
+.xl-diff li{padding-left:18px;position:relative;font-size:.9rem}
+.xl-diff li::before{position:absolute;left:0;font-weight:700}
+.xl-diff li.add::before{content:"+";color:var(--teal)}
+.xl-diff li.del{color:var(--ink-3);text-decoration:line-through}
+.xl-diff li.del::before{content:"−";color:var(--red)}
 .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
 .ph{position:relative;border-radius:var(--radius-s);overflow:hidden;background:var(--surface-2);aspect-ratio:4/3;border:1px solid var(--line)}
 .ph img{width:100%;height:100%;object-fit:cover;display:block}
@@ -353,6 +360,7 @@ function supabaseApi() {
     async deleteCompletion(id) { ok(await sb.from("task_completions").delete().eq("id", id)); },
     async saveTasks(rows) { return ok(await sb.from("tasks").upsert(rows).select()); },
     async deleteTask(id) { ok(await sb.from("tasks").delete().eq("id", id)); },
+    async deleteTasks(ids) { for (let i = 0; i < ids.length; i += 100) ok(await sb.from("tasks").delete().in("id", ids.slice(i, i + 100))); },
     async photos({ managerId, from, to }) {
       let q = sb.from("unit_photos").select("*").gte("for_date", from).lte("for_date", to).order("created_at");
       if (managerId) q = q.eq("manager_id", managerId);
@@ -433,6 +441,7 @@ function demoApi() {
     async deleteCompletion(id) { db.comps = db.comps.filter((c) => c.id !== id); return wait(); },
     async saveTasks(rows) { const out = rows.map((r) => { const row = { id: uid(), active: true, repeat_every: 1, sort_order: 0, created_at: new Date().toISOString(), ...r }; const i = db.tasks.findIndex((t) => t.id === row.id); if (i >= 0) db.tasks[i] = { ...db.tasks[i], ...row }; else db.tasks.push(row); return row; }); return wait(clone(out)); },
     async deleteTask(id) { db.tasks = db.tasks.filter((t) => t.id !== id); db.comps = db.comps.filter((c) => c.task_id !== id); return wait(); },
+    async deleteTasks(ids) { const s = new Set(ids); db.tasks = db.tasks.filter((t) => !s.has(t.id)); db.comps = db.comps.filter((c) => !s.has(c.task_id)); return wait(); },
     async photos({ managerId, from, to }) { return wait(clone(db.photos.filter((p) => (!managerId || p.manager_id === managerId) && p.for_date >= from && p.for_date <= to))); },
     async uploadPhoto(managerId, date, blob, caption) { const url = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); }); const row = { id: uid(), manager_id: managerId, for_date: date, storage_path: "demo", caption, created_at: new Date().toISOString(), url }; db.photos.push(row); return wait(row); },
     async deletePhoto(p) { db.photos = db.photos.filter((x) => x.id !== p.id); return wait(); },
@@ -892,13 +901,14 @@ async function renderManagerDetail(main) {
     </div>
     <h2 style="margin:24px 0 10px">Task by task, last 30 days</h2>
     <div class="card table-wrap"><table class="t">
-      <thead><tr><th>Task</th><th>Type</th><th>Done</th><th>Usual time</th><th class="num">Late</th></tr></thead>
-      <tbody>${perTask.map((r) => `<tr><td>${esc(r.t.title)}</td><td>${typeChip(r.t) || '<span class="chip">Daily</span>'}</td><td>${r.due ? meter(r.done, r.due) : '<span class="faint small">Not due yet</span>'}</td><td class="muted">${r.median ? esc(fmtHHMM(r.median)) : "—"}</td><td class="num">${r.late || ""}</td></tr>`).join("") || `<tr><td colspan="5" class="empty">No tasks assigned yet.</td></tr>`}</tbody>
+      <thead><tr><th>Task</th><th>Type</th><th>Done</th><th>Usual time</th><th class="num">Late</th><th></th></tr></thead>
+      <tbody>${perTask.map((r) => `<tr><td>${esc(r.t.title)}</td><td>${typeChip(r.t) || '<span class="chip">Daily</span>'}</td><td>${r.due ? meter(r.done, r.due) : '<span class="faint small">Not due yet</span>'}</td><td class="muted">${r.median ? esc(fmtHHMM(r.median)) : "—"}</td><td class="num">${r.late || ""}</td><td class="num"><button class="btn ghost danger" type="button" data-deltask="${esc(r.t.id)}" aria-label="Delete ${esc(r.t.title)}">Delete</button></td></tr>`).join("") || `<tr><td colspan="6" class="empty">No tasks assigned yet.</td></tr>`}</tbody>
     </table></div>
     <h2 style="margin:24px 0 10px">Unit photos, last 14 days <span class="faint small">(${photoDays.size} of 14 days)</span></h2>
     ${photos.length ? `<div class="photos">${photos.slice().reverse().map((p) => `<button type="button" class="ph" data-photo="${esc(p.id)}" style="padding:0"><img src="${esc(p.url)}" alt="Unit photo ${esc(fmtDate(p.for_date))}" loading="lazy"><span class="cap">${esc(fmtDate(p.for_date, { day: "numeric", month: "short" }))} · ${esc(fmtTime(p.created_at))}</span></button>`).join("")}</div>` : `<div class="card"><p class="empty">No photos in the last 14 days.</p></div>`}`;
   $("#back").onclick = () => { S.aDetail = null; renderAdmin(); };
   $("#assign").onclick = () => taskForm(null, [m.id]);
+  main.querySelectorAll("[data-deltask]").forEach((b) => b.onclick = () => deleteTaskFlow(S.tasks.find((t) => t.id === b.dataset.deltask)));
   main.querySelectorAll("[data-photo]").forEach((b) => b.onclick = () => photoLightbox(photos.find((p) => p.id === b.dataset.photo)));
 }
 
@@ -922,7 +932,7 @@ function renderTaskAdmin(main) {
         <select class="in" id="ft" style="width:auto"><option value="all">All types</option>${Object.entries(TYPE_LABEL).map(([k, l]) => `<option value="${k}" ${f.type === k ? "selected" : ""}>${l}</option>`).join("")}</select>
         <input class="in" id="fq" type="search" placeholder="Search tasks" value="${esc(f.q)}" style="width:200px">
       </div>
-      <div class="row"><button class="btn" type="button" id="bulk">Add many at once</button><button class="btn primary" type="button" id="newT">Assign a task</button></div>
+      <div class="row" style="flex-wrap:wrap"><button class="btn" type="button" id="xlExport">Export Excel</button><button class="btn" type="button" id="xlImport">Import Excel</button><input type="file" id="xlFile" accept=".xlsx,.xls" class="hidden"><button class="btn" type="button" id="bulk">Add many at once</button><button class="btn primary" type="button" id="newT">Assign a task</button></div>
     </div>
     <div class="card table-wrap"><table class="t">
       <thead><tr><th>Task</th><th>Manager</th><th>Type / schedule</th><th>Due</th><th>Status</th><th></th></tr></thead>
@@ -934,7 +944,7 @@ function renderTaskAdmin(main) {
           <td>${t.task_type === "daily" ? "Daily" : typeChip(t)}${t.target_time ? ` <span class="faint small">by ${esc(fmtHHMM(t.target_time))}</span>` : ""}</td>
           <td class="muted">${t.due_date ? esc(fmtDate(t.due_date)) : "—"}</td>
           <td>${status}</td>
-          <td class="num"><button class="btn ghost" type="button" data-edit="${esc(t.id)}">Edit</button></td></tr>`;
+          <td class="num" style="white-space:nowrap"><button class="btn ghost" type="button" data-edit="${esc(t.id)}">Edit</button><button class="btn ghost danger" type="button" data-deltask="${esc(t.id)}" aria-label="Delete ${esc(t.title)}">Delete</button></td></tr>`;
       }).join("") || `<tr><td colspan="6" class="empty">No tasks match. Use “Assign a task” to add one.</td></tr>`}</tbody>
     </table></div>
     <p class="faint small" style="margin-top:8px">${list.length} tasks shown.</p>`;
@@ -944,6 +954,131 @@ function renderTaskAdmin(main) {
   $("#newT").onclick = () => taskForm(null, f.manager !== "all" ? [f.manager] : []);
   $("#bulk").onclick = () => bulkForm(f.manager !== "all" ? [f.manager] : []);
   main.querySelectorAll("[data-edit]").forEach((b) => b.onclick = () => taskForm(S.tasks.find((t) => t.id === b.dataset.edit)));
+  main.querySelectorAll("[data-deltask]").forEach((b) => b.onclick = () => deleteTaskFlow(S.tasks.find((t) => t.id === b.dataset.deltask)));
+  $("#xlExport").onclick = exportTasksExcel;
+  $("#xlImport").onclick = () => $("#xlFile").click();
+  $("#xlFile").onchange = (e) => { const file = e.target.files[0]; e.target.value = ""; if (file) importTasksExcel(file); };
+}
+
+/* ---------- Delete one task ---------- */
+async function deleteTaskFlow(t, onCancel) {
+  if (!t) return;
+  const m = S.profiles.find((p) => p.id === t.manager_id);
+  const who = m ? titleCase(m.full_name) : "the manager";
+  if (!(await ask(`Delete “${t.title}” from ${who}'s tasks? It disappears from their list, and its past ticks are deleted too.`, "Delete task"))) { if (onCancel) onCancel(); return; }
+  try {
+    await api.deleteTask(t.id);
+    S.tasks = S.tasks.filter((x) => x.id !== t.id);
+    S.comps = S.comps.filter((c) => c.task_id !== t.id);
+    S.oneOff = S.oneOff.filter((c) => c.task_id !== t.id);
+    renderAdmin(); toast("Task deleted");
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------- Excel: "TASK LISTS" sheet — row 1 = manager names, tasks listed under each name ---------- */
+const XL_SHEET = "TASK LISTS";
+const normText = (v) => String(v ?? "").replace(/\s+/g, " ").trim();
+const taskKey = (v) => normText(v).toLowerCase();
+const nameKey = (v) => normText(v).toUpperCase();
+const byOrder = (a, b) => (a.sort_order - b.sort_order) || String(a.created_at || "").localeCompare(String(b.created_at || ""));
+function xlReady() { if (window.XLSX) return true; toast("Excel tools didn't load. Check the internet connection and reload the page."); return false; }
+
+function exportTasksExcel() {
+  if (!xlReady()) return;
+  const mgrs = managers().filter((m) => m.active).sort((a, b) => a.full_name.localeCompare(b.full_name));
+  const cols = mgrs.map((m) => S.tasks.filter((t) => t.manager_id === m.id && t.active).sort(byOrder).map((t) => t.title));
+  const height = Math.max(0, ...cols.map((c) => c.length));
+  const aoa = [mgrs.map((m) => m.full_name)];
+  for (let r = 0; r < height; r++) aoa.push(cols.map((c) => c[r] ?? ""));
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = mgrs.map(() => ({ wch: 36 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, XL_SHEET);
+  XLSX.writeFile(wb, `SOP - FACTORY tasks ${istToday()}.xlsx`);
+  toast("Excel exported");
+}
+
+/* Compare the sheet with the app and work out what changes. Columns for names not in the
+   sheet are left alone; a name with an empty column means "this manager has no tasks". */
+function buildImportPlan(rows) {
+  const header = rows[0] || [];
+  const byName = new Map(managers().map((m) => [nameKey(m.full_name), m]));
+  const sheet = new Map(), unknown = [];
+  header.forEach((h, c) => {
+    const name = nameKey(h); if (!name) return;
+    const m = byName.get(name); if (!m) { unknown.push(normText(h)); return; }
+    const list = sheet.get(m.id) || [];
+    for (let r = 1; r < rows.length; r++) { const t = normText((rows[r] || [])[c]); if (t && !list.some((x) => taskKey(x) === taskKey(t))) list.push(t); }
+    sheet.set(m.id, list);
+  });
+  const perManager = [], adds = [], updates = [], deletes = [];
+  for (const [mid, titles] of sheet) {
+    const mine = S.tasks.filter((t) => t.manager_id === mid).sort(byOrder);
+    const used = new Set(), row = { m: S.profiles.find((p) => p.id === mid), added: [], removed: [], restored: [], kept: 0 };
+    titles.forEach((title, pos) => {
+      const hit = mine.find((t) => !used.has(t.id) && t.active && taskKey(t.title) === taskKey(title))
+               || mine.find((t) => !used.has(t.id) && !t.active && taskKey(t.title) === taskKey(title));
+      if (hit) {
+        used.add(hit.id);
+        if (!hit.active) { row.restored.push(hit.title); updates.push({ ...hit, active: true, sort_order: pos }); }
+        else { row.kept++; if (hit.sort_order !== pos) updates.push({ ...hit, sort_order: pos }); }
+      } else {
+        row.added.push(title);
+        adds.push({ manager_id: mid, title, task_type: "daily", priority: "normal", repeat_every: 1, sort_order: pos, start_date: istToday(), active: true, created_by: DEMO ? null : S.me.id });
+      }
+    });
+    mine.filter((t) => t.active && !used.has(t.id)).forEach((t) => { row.removed.push(t.title); deletes.push(t.id); });
+    perManager.push(row);
+  }
+  perManager.sort((a, b) => a.m.full_name.localeCompare(b.m.full_name));
+  const untouched = managers().filter((m) => m.active && !sheet.has(m.id)).map((m) => m.full_name);
+  return { perManager, adds, updates, deletes, unknown, untouched, matched: sheet.size };
+}
+
+async function importTasksExcel(file) {
+  if (!xlReady()) return;
+  let rows;
+  try {
+    const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
+    const name = wb.SheetNames.find((n) => nameKey(n) === XL_SHEET);
+    if (!name) { toast(`This file has no sheet named “${XL_SHEET}”. Sheets found: ${wb.SheetNames.join(", ")}`); return; }
+    rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: "", raw: false, blankrows: true });
+  } catch (e) { toast("Couldn't read that file. Save it as .xlsx and try again."); return; }
+  const plan = buildImportPlan(rows);
+  if (!plan.matched) { toast("No manager names found in row 1 of the TASK LISTS sheet."); return; }
+  const changed = plan.perManager.filter((r) => r.added.length || r.removed.length || r.restored.length);
+  const nAdd = plan.adds.length, nDel = plan.deletes.length, nRes = plan.perManager.reduce((a, r) => a + r.restored.length, 0);
+  const list = (arr, cls) => arr.map((t) => `<li class="${cls}">${esc(t)}</li>`).join("");
+  openSheet(`
+    <h2>Import tasks from Excel</h2>
+    <p class="muted" style="margin-bottom:12px">${esc(file.name)} · ${plan.matched} managers in the sheet</p>
+    ${nAdd || nDel || nRes ? `<div class="kpis" style="margin-bottom:12px">
+        <div class="card kpi"><div class="v">${nAdd}</div><div class="l">tasks to add</div></div>
+        <div class="card kpi"><div class="v">${nDel}</div><div class="l">tasks to delete</div></div>
+        ${nRes ? `<div class="card kpi"><div class="v">${nRes}</div><div class="l">paused tasks to switch back on</div></div>` : ""}
+      </div>` : `<p style="margin-bottom:12px"><b>Nothing to change.</b> The app already matches this sheet.</p>`}
+    ${plan.unknown.length ? `<p class="err" style="margin-bottom:10px">Names in row 1 that don't match any manager in the app (their columns are skipped): ${esc(plan.unknown.join(", "))}</p>` : ""}
+    ${plan.untouched.length ? `<p class="faint small" style="margin-bottom:10px">Not in the sheet, so left unchanged: ${esc(plan.untouched.map(titleCase).join(", "))}</p>` : ""}
+    ${changed.length ? `<div class="card table-wrap" style="max-height:46vh;overflow:auto"><table class="t">
+        <thead><tr><th>Manager</th><th>Changes</th></tr></thead>
+        <tbody>${changed.map((r) => `<tr><td style="vertical-align:top"><b>${esc(titleCase(r.m.full_name))}</b><div class="faint small">${r.kept} unchanged</div></td>
+          <td><ul class="xl-diff">${list(r.added, "add")}${list(r.restored, "add")}${list(r.removed, "del")}</ul></td></tr>`).join("")}</tbody>
+      </table></div>` : ""}
+    ${nDel ? `<p class="faint small" style="margin-top:10px">Deleted tasks disappear from the manager's list, and their past ticks are deleted too.</p>` : ""}
+    <p class="faint small" style="margin-top:6px">New tasks are added as daily tasks. Weekly, monthly, one-off and project tasks keep their settings as long as their name stays in the sheet.</p>
+    <p class="err" id="xlErr"></p>
+    <div class="actions"><button class="btn" type="button" data-dismiss>${nAdd || nDel || nRes ? "Cancel" : "Close"}</button>
+      ${nAdd || nDel || nRes ? `<button class="btn primary" type="button" id="xlApply">Apply changes</button>` : ""}</div>`, true);
+  $("#xlApply") && ($("#xlApply").onclick = async () => {
+    const btn = $("#xlApply"); btn.disabled = true; btn.textContent = "Updating…";
+    try {
+      if (plan.adds.length) await api.saveTasks(plan.adds);
+      if (plan.updates.length) await api.saveTasks(plan.updates);
+      if (plan.deletes.length) await api.deleteTasks(plan.deletes);
+      closeSheet(); await loadAdmin(); renderAdmin();
+      toast(`Tasks updated: ${nAdd} added, ${nDel} deleted`);
+    } catch (e) { $("#xlErr").textContent = "Update stopped: " + e.message + ". Import the file again to finish."; btn.disabled = false; btn.textContent = "Apply changes"; }
+  });
 }
 
 function managerChecks(selected) {
@@ -1015,10 +1150,7 @@ function taskForm(task, preselect = []) {
         closeSheet(); renderAdmin(); toast(editing ? "Task saved" : `Task assigned to ${targets.length} ${targets.length === 1 ? "manager" : "managers"}`);
       } catch (e) { err(e.message); $("#saveT").disabled = false; }
     };
-    $("#delT") && ($("#delT").onclick = async () => {
-      if (!(await ask("Delete this task and all its history? To keep the history, pause it instead (untick Active).", "Delete task"))) { taskForm(t); return; }
-      await api.deleteTask(t.id); S.tasks = S.tasks.filter((x) => x.id !== t.id); S.comps = S.comps.filter((c) => c.task_id !== t.id); closeSheet(); renderAdmin(); toast("Task deleted");
-    });
+    $("#delT") && ($("#delT").onclick = () => { closeSheet(); deleteTaskFlow(t, () => taskForm(t)); });
   };
   draw();
 }

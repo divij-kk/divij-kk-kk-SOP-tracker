@@ -13,6 +13,7 @@ Same stack as the KK ERP: **GitHub** (code) + **Supabase** (database, logins, ph
 | `supabase/schema.sql` | Tables, security rules, photo bucket. Run once. |
 | `supabase/admin-functions.sql` | Admin tools: add manager, new PIN, switch login off. Run once. |
 | `supabase/setup-accounts.sql` | Creates the admin login + all 18 manager logins and shows their PINs. Run once. |
+| `supabase/load-tasks-from-sop.sql` | Loads every task from the SOP - FACTORY sheet (TASK LISTS tab) as daily tasks. Safe to re-run. |
 
 ## How it works
 
@@ -42,6 +43,18 @@ Same stack as the KK ERP: **GitHub** (code) + **Supabase** (database, logins, ph
 3. **New query** → paste `supabase/setup-accounts.sql`, replace `CHANGE-ME` with the admin password → **Run**. The results table lists every manager's PIN; copy it somewhere safe.
 4. **Authentication → Sign In / Providers**: *Allow new users to sign up* OFF, *Confirm email* OFF.
 5. **Cloudflare → Workers & Pages → Create → Pages → Connect to Git** → pick this repo → no build command, output directory `/` → Deploy. Every push to `main` redeploys.
+
+## Excel import / export (admin → Tasks)
+
+- **Export Excel** downloads the current tasks in the same layout as the SOP - FACTORY sheet: a `TASK LISTS` sheet, manager names in row 1, each manager's tasks listed under their name.
+- **Import Excel** reads the `TASK LISTS` sheet of an .xlsx file, shows what will change, and applies it only when you click **Apply changes**:
+  - a task in the sheet that the manager doesn't have → added as a daily task;
+  - a task the manager has that's no longer in their column → deleted (its past ticks too);
+  - matching ignores capitals and extra spaces; a task listed twice counts once;
+  - a manager whose column is missing from the sheet is left unchanged; a column with the name but no tasks removes all of that manager's tasks;
+  - names in row 1 must match the manager names in the app.
+- Weekly, monthly, one-off and project tasks keep their settings as long as their name stays in the sheet.
+- Any task can also be deleted with its **Delete** button (Tasks tab, or a manager's page). It disappears from that manager's list.
 
 ## Rules worth knowing
 - Times are always India time, whatever the phone's clock is set to.
