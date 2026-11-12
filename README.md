@@ -14,6 +14,8 @@ Same stack as the KK ERP: **GitHub** (code) + **Supabase** (database, logins, ph
 | `supabase/admin-functions.sql` | Admin tools: add manager, new PIN, switch login off. Run once. |
 | `supabase/setup-accounts.sql` | Creates the admin login + all 18 manager logins and shows their PINs. Run once. |
 | `supabase/load-tasks-from-sop.sql` | Loads every task from the SOP - FACTORY sheet (TASK LISTS tab) as daily tasks. Safe to re-run. |
+| `supabase/sheet-sync.sql` | Turns on Google Sheet sync and Excel import. Shows the sync code. Run once. |
+| `google-apps-script/Code.gs` | Script pasted into the Google Sheet (Extensions → Apps Script). |
 
 ## How it works
 
@@ -44,17 +46,32 @@ Same stack as the KK ERP: **GitHub** (code) + **Supabase** (database, logins, ph
 4. **Authentication → Sign In / Providers**: *Allow new users to sign up* OFF, *Confirm email* OFF.
 5. **Cloudflare → Workers & Pages → Create → Pages → Connect to Git** → pick this repo → no build command, output directory `/` → Deploy. Every push to `main` redeploys.
 
+## Google Sheet sync (SOP - FACTORY → app)
+
+The `TASK LISTS` tab of the SOP - FACTORY Google Sheet is the master list of tasks.
+
+**Layout:** row 1 = manager names (each over two columns), row 2 = `DAILY REPETITIVE` / `NON-DAILY`, row 3 onwards = tasks.
+
+**When it syncs:** every 15 minutes automatically, or straight away with the sheet menu **KK Tasks → Sync tasks to app now**. The result of the last sync is written in the `APP SYNC` tab.
+
+**Rules:**
+- Task in a DAILY REPETITIVE column → daily task in the app.
+- Task in a NON-DAILY column → added but hidden from the manager until the admin sets when it repeats (Tasks → filter "Needs schedule" → Edit).
+- Task removed from the sheet → paused in the app (history kept). Put it back in the sheet and it comes back.
+- Tasks created in the app (not from the sheet) are never touched.
+- A manager whose name isn't in row 1 is left unchanged. A name with empty columns pauses all of that manager's sheet tasks.
+- Matching ignores capitals and extra spaces; a task listed twice counts once. Names must match the manager names in the app.
+
+**Setup (once):**
+1. Supabase → SQL Editor → run `supabase/sheet-sync.sql` → copy the SYNC CODE it shows.
+2. Google Sheet → Extensions → Apps Script → paste `google-apps-script/Code.gs` → put the sync code in `SYNC_CODE` → Save.
+3. Reload the sheet → **KK Tasks → Turn on automatic sync (every 15 min)** → allow access.
+
 ## Excel import / export (admin → Tasks)
 
-- **Export Excel** downloads the current tasks in the same layout as the SOP - FACTORY sheet: a `TASK LISTS` sheet, manager names in row 1, each manager's tasks listed under their name.
-- **Import Excel** reads the `TASK LISTS` sheet of an .xlsx file, shows what will change, and applies it only when you click **Apply changes**:
-  - a task in the sheet that the manager doesn't have → added as a daily task;
-  - a task the manager has that's no longer in their column → deleted (its past ticks too);
-  - matching ignores capitals and extra spaces; a task listed twice counts once;
-  - a manager whose column is missing from the sheet is left unchanged; a column with the name but no tasks removes all of that manager's tasks;
-  - names in row 1 must match the manager names in the app.
-- Weekly, monthly, one-off and project tasks keep their settings as long as their name stays in the sheet.
-- Any task can also be deleted with its **Delete** button (Tasks tab, or a manager's page). It disappears from that manager's list.
+- **Export Excel** downloads the current tasks in the same layout as the sheet (daily tasks under DAILY REPETITIVE; weekly, monthly, one-off and project tasks under NON-DAILY).
+- **Import Excel** applies an .xlsx with the same rules as the Google Sheet sync, after showing a preview. Nothing changes until **Apply changes**.
+- Any task can be deleted with its **Delete** button (Tasks tab, or a manager's page). A task that is still in the Google Sheet comes back at the next sync, so remove it from the sheet instead.
 
 ## Rules worth knowing
 - Times are always India time, whatever the phone's clock is set to.
